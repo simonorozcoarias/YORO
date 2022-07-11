@@ -8,7 +8,7 @@ def tabGeneration(resfile,Yhat_pred,list_ids,window,threshold_presence):
     classes = {3:"RT",4:"GAG",5:"ENV",6:"INT",7:"AP",8:"RNASEH",9:"LTR"}
     print("Writting output file!!")
     resultado = open(resfile,'w')
-    resultado.write("|id\t |ProbabilityPresence\t |inic\t |longitud\t |clase\t |ProbabilityClass\n")
+    resultado.write("|id\t |ProbabilityPresence\t |Start\t |Length\t |Class\t |ProbabilityClass\n")
     
     ## Acá se empieza a generar el archivo para procesar la salida.
     #print("El tamaño que se genera es: ",np.shape(Yhat_pred[0,0,:,0]) )
