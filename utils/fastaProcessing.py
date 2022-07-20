@@ -56,7 +56,7 @@ def check_nucleotides_master(list_seqs, threads):
     for i in range(len(localChecks)):
         if localChecks[i] == 1:
             print("FATAL ERROR: DNA sequences must contain only A, C, G, T, or N characters, please fix it and "
-                  "re-run Inpactor2")
+                  "re-run YoloDNA")
             sys.exit(0)
 
     pool.close()
@@ -139,7 +139,7 @@ def get_final_dataset_size(file, total_win_len, slide):
         for j in range(slide, len(str(seqfile[i].seq)), total_win_len):
             if "#" in str(seqfile[i].id):
                 print("FATAL ERROR: Sequence ID (" + str(seqfile[i].id) + ") must no contain character '#', please remove "
-                                     "all of these and re-run Inpactor2")
+                                     "all of these and re-run YoloDNA")
                 sys.exit(0)
             initial_pos = j
             end_pos = initial_pos + total_win_len
@@ -148,5 +148,3 @@ def get_final_dataset_size(file, total_win_len, slide):
             list_ids_splitted.append(str(seqfile[i].id) + "#" + str(initial_pos) + "#" + str(end_pos))
             list_seq_splitter.append(str(seqfile[i].seq)[initial_pos:end_pos])
     return list_ids_splitted, list_seq_splitter
-
-

@@ -3,7 +3,6 @@
     This pipeline is for processing and detection of domains with a neural network architecture
     @author: Johan Sebastian Piña Duran
 '''
-
 import sys
 import os
 import time
