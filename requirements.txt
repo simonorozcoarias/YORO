@@ -1,4 +1,0 @@
-numpy
-tensorflow
-tensorflow-gpu
-biopython

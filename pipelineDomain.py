@@ -53,6 +53,7 @@ def argumentParser():
     parser.add_option('-n', '--nms',dest='nms',help='Threshold for NMS filter',type=float, default=0.1)
     parser.add_option('-w', '--window',dest='win',help='Window size for object detection',type=int,default=50000)
     parser.add_option('-m', '--modelpath',dest='model',help='path to models weights',type=str,default=None)    
+    parser.add_option('-x', '--index',dest='index',help='index of name genome (1-226)',type=str,default=None)    
     (options,_) = parser.parse_args()
     return options
     
@@ -73,7 +74,7 @@ def main():
     modelFilepath = options.model
     file_csv = 'metrics/genomes_links.csv'
     path_anotation = 'metrics/dataset_intect_LTR-RT'
-    idx = 2
+    idx = options.index
     domain = 'all'
     analysisName = 'analysis.tab'
 
@@ -197,7 +198,7 @@ def main():
         print("File Writting time elapsed: {}s".format(finish1))
 
         begin1 = time.time() 
-        path_pred_anot = outputDir+'/'+filename
+        path_pred_anot = outputDir+'/'+filename.replace('.tab','out')
         path_analysis = outputDir+'/'+analysisName
         _ = analysis(file_csv, path_anotation, idx, path_pred_anot, domain, path_analysis)
         finish1 = time.time() - begin1

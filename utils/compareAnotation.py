@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 from optparse import OptionParser
 import random 
 import numpy as np 
@@ -9,6 +8,22 @@ import sys
 from Bio import SeqIO
 from tensorflow.keras import backend as K 
 import time
+
+def clean_file(df_genome):
+    """
+    Se elimina la información de los genomas que no poseen un link al genoma y se reemplazan los espacios
+    por barras al piso.
+
+    df_genome: dataFrame con la base de datos
+    
+    return: se retorna un dataFrame con las especies eliminadas
+    """
+    delete_specie = df_genome['Species'].loc[df_genome['Data sources'].str.contains('available',case=False)]
+    df_genome.drop(df_genome.loc[df_genome['Data sources'].str.contains('available',case=False)].index, inplace=True)
+    df_genome["Data sources"] = df_genome["Data sources"].str.replace(' ','_')
+    delete_specie.append(df_genome['Species'].loc[df_genome['Data sources'].isna()])
+    df_genome.dropna(subset=['Filtered data'], inplace=True)
+    return delete_specie, df_genome
 
 def find(name, path):
     for root, dirs, files in os.walk(path, topdown=True):
@@ -113,8 +128,10 @@ def metrics(threshold, df_groundT, df_pred, ids):
 
 def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
     begin = time.time()
+    th_class = 0.9
+    threshold = ['0.5','0.8','0.95']
     #Se lee el archivo csv con los genomas
-    df_genome = pd.read_csv(file_csv, sep=';', skiprows=1, skipfooter=558-301, engine='python')
+    df_genome = pd.read_csv(file_csv, sep=';')
     specie = df_genome['Species'].loc[idx-1]
     #Se determina cual es el genoma que se desea estudiar a partir del indice en el csv
     query = str(specie.replace(' ','_')+'.txt')

@@ -10,8 +10,9 @@ import os
 import gzip
 import shutil
 import gdown
+from Bio import SeqIO
 from tqdm import tqdm
-from filtered import clean_file
+import sys
 
 def argumentParser():
     usage = "Usage: Web_genome.py -c file.csv -[options] [Value]"
@@ -19,9 +20,9 @@ def argumentParser():
 
     parser.add_option('-c', '--file.csv', dest='fileCSV', help='file csv with informatio about genomes',type=str, default=None)   
     parser.add_option('-T', '--timeout', dest='timeout', help='timeout for connection',type=int, default=None)   
-    parser.add_option('-d', '--directory', dest='dire', help='Output directory',type=str, default=None)
+    parser.add_option('-d', '--directory', dest='dire', help='Output directory',type=str, default=".")
     parser.add_option('-s', '--samples', dest='samples', help='number of samples to be downloaded randomly',type=int, default=-1)
-    parser.add_option('-i', '--index', dest='index', help='specific genome to be downloaded from the database using index (1-300)',type=int, default=1)
+    parser.add_option('-i', '--index', dest='index', help='specific genome to be downloaded from the database using index (1-226)',type=int, default=1)
     (options,_) = parser.parse_args()
     return options
 
@@ -62,8 +63,7 @@ def download(df_genome,path_save,sample,timeout,index):
     if sample != -1:
         sample = random.sample(range(301),sample)
         links = df_genome['Filtered data'].loc[sample].tolist()
-        names = []
-        [names.append(i.replace(' ', '_')+'.fasta') for i in df_genome['Species'].loc[sample].tolist()]
+        [names.replace(' ', '_')+'.fasta' for names in df_genome['Species'].loc[sample].tolist()]
     else: 
         links = [df_genome['Filtered data'].loc[index-1]]
         names = [df_genome['Species'].loc[index-1].replace(' ','_')+'.fasta']
@@ -93,6 +93,7 @@ def download(df_genome,path_save,sample,timeout,index):
                         os.remove(path_save+'/'+name_file+'.zip')
                     if os.path.isfile(path_save+'/'+names[i]+'.gz'):
                         os.remove(path_save+'/'+names[i]+'.gz')
+                        return names
                     else:
                         print('El archivo .gz no se elimino')
                 else: 
@@ -108,6 +109,7 @@ def download(df_genome,path_save,sample,timeout,index):
                         shutil.copyfileobj(f_1,f_2)
                 if os.path.isfile(path_save+'/'+names[i]+'.gz'):
                     os.remove(path_save+'/'+names[i]+'.gz')
+                    return names
                 else:
                     print('El archivo .gz no se elimino')
             except: 
@@ -122,6 +124,7 @@ def download(df_genome,path_save,sample,timeout,index):
                             shutil.copyfileobj(f_1,f_2)
                     if os.path.isfile(path_save+'/'+names[i]+'.gz'):
                         os.remove(path_save+'/'+names[i]+'.gz')
+                        return names
                     else:
                         print('El archivo .gz no se elimino')
                 except:
@@ -130,10 +133,22 @@ def download(df_genome,path_save,sample,timeout,index):
                 try:
                     respose = requests.get(j, timeout=timeout)
                     open(path_save+'/'+names[i],'wb').write(respose.content)
+                    return names
                 except:
                     print('Fallo la descarga de ',names[i])
+    return None
 
-df_genome = pd.read_csv(file_csv, sep=';', skiprows=1, skipfooter=558-301, engine='python')
-delete_species, df_genome = clean_file(df_genome)
+df_genome = pd.read_csv(file_csv, sep=';')
 links_unique = unique_webpage(df_genome, count=False)
-download(df_genome,path_save,sample=samples,timeout=timeout,index=idx)
+names = download(df_genome,path_save,sample=samples,timeout=timeout,index=idx)
+
+#Validación de si el archivo descargado coincide con el de anotación
+if names is not None:
+    id_anot = df_genome.index.tolist()[0]
+    id_fasta = list(SeqIO.parse(path_save+'/'+names[0], 'fasta'))
+    if id_anot not in id_fasta[:].id:
+        f = open('ERROR.txt','w').write('TRUE')
+        print("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
+        sys.exit(1)
+    else:
+        f = open('ERROR.txt','w').write('False')
