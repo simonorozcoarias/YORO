@@ -25,6 +25,8 @@ from utils.deepLutils import NMS
 
 from utils.resultsWriting import tabGeneration
 
+from utils.compareAnotation import analysis
+
 def argumentParser():
 
     """
@@ -69,6 +71,11 @@ def main():
     threshold_NMS=options.nms
     total_win_len = options.win
     modelFilepath = options.model
+    file_csv = 'metrics/genomes_links.csv'
+    path_anotation = 'metrics/dataset_intect_LTR-RT'
+    idx = 2
+    domain = 'all'
+    analysisName = 'analysis.tab'
 
     if file is None:
         print("Please insert at least a file in FASTA format")
@@ -188,6 +195,14 @@ def main():
         finish1 = time.time() - begin1
         print("The output of this pipeline was written at: ", outputfile)
         print("File Writting time elapsed: {}s".format(finish1))
+
+        begin1 = time.time() 
+        path_pred_anot = outputDir+'/'+filename
+        path_analysis = outputDir+'/'+analysisName
+        _ = analysis(file_csv, path_anotation, idx, path_pred_anot, domain, path_analysis)
+        finish1 = time.time() - begin1
+        print("The analysis file was writeen at: ",path_analysis)
+        print("Analysis Executed: time elapsed: {}s".format(finish1))
 
 
     finish = time.time() - begin
