@@ -323,7 +323,7 @@ def IOU(box1,box2,size1,size2):
     box1_area = len1*size1
     box2_area = len2*size2
     union_area = box1_area+box2_area-inter_area
-    iou = inter_area/union_area
+    iou = inter_area/(union_area + K.epsilon())
     return iou
 
 def NMS(Yhat, threshold_presence, threshold_NMS):

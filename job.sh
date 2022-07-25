@@ -21,15 +21,24 @@ conda activate YoloDNA
 for i in {1..1}
 do
     echo "Descargando secuencia $i"
+    
+    conda deactivate
+    conda activate YoloDNA
+    
     python3 Web_genome.py -c "metrics/genomes_links.csv" -T 100 -i $i
     filename=`ls *.fasta`
-    echo "Ejecutando el genome ${filename} secuencia $i"
     flag=`cut -f1 ERROR.txt`
-        if (($flag=="TRUE"))
+        if [ "$flag" == "TRUE" ] 
                 then
                 rm -f ERROR.txt
                 break
                 fi
-    python3 pipelineDomain.py -f filename -o ${filename/fasta/tab} -t 0.5 -x $i
+    rm -f ERROR.txt
+
+    conda deactivate
+    conda activate YoloDNA2
+
+    echo "Ejecutando el genome ${filename} secuencia $i"
+    python3 pipelineDomain.py -f $filename -o ${filename/fasta/tab} -t 0.5 -x $i
     rm -f $filename
 done

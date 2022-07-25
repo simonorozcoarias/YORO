@@ -33,6 +33,11 @@ path_save = options.dire
 samples = options.samples
 idx = options.index
 
+def find(name, path):
+    for root, dirs, files in os.walk(path, topdown=True):
+        if name in files:
+            return os.path.join(root, name)
+
 #Las paginas de los genomas son muy diferentes teniendo diferentes formatos y donde en la mayoria 
 #los links no dirigen al genoma sino a los bioprojects
 def unique_webpage(df_genome, count=False):
@@ -141,14 +146,24 @@ def download(df_genome,path_save,sample,timeout,index):
 df_genome = pd.read_csv(file_csv, sep=';')
 links_unique = unique_webpage(df_genome, count=False)
 names = download(df_genome,path_save,sample=samples,timeout=timeout,index=idx)
+path_query = find(names, 'metrics/dataset_intact_LTR-RT')
 
 #Validación de si el archivo descargado coincide con el de anotación
 if names is not None:
-    id_anot = df_genome.index.tolist()[0]
-    id_fasta = list(SeqIO.parse(path_save+'/'+names[0], 'fasta'))
-    if id_anot not in id_fasta[:].id:
-        f = open('ERROR.txt','w').write('TRUE')
-        print("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
-        sys.exit(1)
+    if path_query is not None:
+        df_anot = pd.read_csv(path_query, sep='\t')
+        df_anot.columns = [i.replace(' ','') for i in list(df_anot.columns)]
+        id_anot = df_anot['Chromosome'].tolist()[0]
+        id_fasta = list(SeqIO.parse(path_save+'/'+names[0], 'fasta'))
+        #print('anot: ',id_anot)
+        #print([i.id for i in id_fasta[:6]])
+        if id_anot not in [i.id for i in id_fasta]:
+            f = open('ERROR.txt','w').write('TRUE')
+            print("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
+            sys.exit(1)
+        else:
+            f = open('ERROR.txt','w').write('FALSE')
     else:
-        f = open('ERROR.txt','w').write('False')
+        print("No encontro el archivo de anotación")
+        f=open('ERROR.txt','w').write('TRUE')
+

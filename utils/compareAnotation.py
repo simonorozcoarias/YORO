@@ -170,16 +170,18 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
         for dom in domains:
             df_groundT, df_predict = extract_dom(domain=dom, groundT=df_groundTrue.copy(), pred=df_pred.copy())
             ids = extract_ids(groundT=df_groundT, pred=df_predict)  
-            print('Dominio: ',dom) #,'df_groundT: ',df_groundT, 'Prediccion',df_predict)
+            #print('Dominio: ',dom) #,'df_groundT: ',df_groundT, 'Prediccion',df_predict)
             for th in threshold:
                 #file.write(f'Thershold {th} \n')
                 Precision, Recall, f1, list_scores = metrics(th, df_groundT=df_groundT, df_pred=df_predict, ids=ids)
                 scores[th] = scores[th] + list_scores
                 file.write(f'{dom} \t {th} \t {Precision} \t {Recall} \t {f1} \n')
-                print(f'Metricas con un threshold de {th} para el dominio {dom} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
+                #print(f'Metricas con un threshold de {th} para el dominio {dom} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
         for th in threshold:
             precisionGlobal = scores[th][0]/(scores[th][0] + scores[th][1]+ K.epsilon())
             recallGlobal = scores[th][0]/(scores[th][0] + scores[th][2] + K.epsilon())
             f1Global = 2*precisionGlobal*recallGlobal/(precisionGlobal + recallGlobal + K.epsilon())
             file.write(f'GLOBAL \t {th} \t {precisionGlobal} \t {recallGlobal} \t {f1Global} \n')
+            file.write(f'confusion: {th} \t overallTP: {scores[th][0]} \t overallFP: {scores[th][1]} \t overallFN: {scores[th][2]}\n')
+
     return scores

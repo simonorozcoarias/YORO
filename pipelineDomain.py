@@ -53,7 +53,7 @@ def argumentParser():
     parser.add_option('-n', '--nms',dest='nms',help='Threshold for NMS filter',type=float, default=0.1)
     parser.add_option('-w', '--window',dest='win',help='Window size for object detection',type=int,default=50000)
     parser.add_option('-m', '--modelpath',dest='model',help='path to models weights',type=str,default=None)    
-    parser.add_option('-x', '--index',dest='index',help='index of name genome (1-226)',type=str,default=None)    
+    parser.add_option('-x', '--index',dest='index',help='index of name genome (1-226)',type=int,default=None)    
     (options,_) = parser.parse_args()
     return options
     
@@ -73,7 +73,7 @@ def main():
     total_win_len = options.win
     modelFilepath = options.model
     file_csv = 'metrics/genomes_links.csv'
-    path_anotation = 'metrics/dataset_intect_LTR-RT'
+    path_anotation = 'metrics/dataset_intact_LTR-RT'
     idx = options.index
     domain = 'all'
     analysisName = 'analysis.tab'
@@ -101,10 +101,10 @@ def main():
 
     if threads is None:
         threads = multiprocessing.cpu_count()
-        print(f"In this execution will be used {threads} cores")
+        print("In this execution will be used {} cores".format(threads))
     elif threads > multiprocessing.cpu_count():
         threads = multiprocessing.cpu_count()
-        print(f"Number of cores exced available resources, setting to {threads} cores")
+        print("Number of cores exced available resources, setting to {} cores".format(threads))
         
     if threshold_presence > 1.0 or threshold_presence < 0.0:
         print("An error ocurred in threshold value for presence, setting this by default 0.7")
@@ -200,7 +200,7 @@ def main():
         begin1 = time.time() 
         path_pred_anot = outputDir+'/'+filename.replace('.tab','out')
         path_analysis = outputDir+'/'+analysisName
-        _ = analysis(file_csv, path_anotation, idx, path_pred_anot, domain, path_analysis)
+        analysis(file_csv, path_anotation, idx, path_pred_anot, domain, path_analysis)
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
         print("Analysis Executed: time elapsed: {}s".format(finish1))
