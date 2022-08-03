@@ -38,7 +38,7 @@ do
     conda deactivate
     conda activate YoloDNA2
 
-    echo "Ejecutando el genome ${filename} secuencia $i"
+    echo "Ejecutando el genoma ${filename} secuencia $i"
     python3 pipelineDomain.py -f $filename -o ${filename/fasta/tab} -t 0.5 -x $i
     rm -f $filename
 done
