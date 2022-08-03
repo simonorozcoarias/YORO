@@ -183,5 +183,3 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
             f1Global = 2*precisionGlobal*recallGlobal/(precisionGlobal + recallGlobal + K.epsilon())
             file.write(f'GLOBAL \t {th} \t {precisionGlobal} \t {recallGlobal} \t {f1Global} \n')
             file.write(f'confusion: {th} \t overallTP: {scores[th][0]} \t overallFP: {scores[th][1]} \t overallFN: {scores[th][2]}\n')
-
-    return scores
