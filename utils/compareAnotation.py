@@ -57,12 +57,26 @@ def extract_dom(domain, groundT, pred):
 
 
 def extract_ids(groundT, pred):
+    """
+    Esta función determina los ids unicos donde se predice el dominio de interes 
+    tanto para la anotación de predicción como para la anotación groundTrue
+
+    Args:
+        groundT (dataframe): contiene la información de la anotación groundTrue 
+        para un dominio en especifico
+        
+        pred (dataframe): contiiene la información de la anotación de predicción 
+        para un dominio en especifico
+
+    Returns:
+        list: lista que contiene los ids unicos para ambas anotaciones
+    """
     if groundT.empty==True and pred.empty==True:
         ids = []
     elif groundT.empty==False:
-        ids = pred.index.unique().tolist()
-    elif pred.empty==False:
         ids = groundT.index.unique().tolist()
+    elif pred.empty==False:
+        ids = pred.index.unique().tolist()
     else:
         ids = groundT.index.unique().tolist()
         ids.append(pred.index.unique().tolist())
@@ -127,17 +141,19 @@ def metrics(threshold, df_groundT, df_pred, ids):
     return round(Precision,3), round(Recall,3), round(f1,3), list_scores
 
 def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
-    begin = time.time()
-    th_class = 0.9
-    threshold = ['0.5','0.8','0.95']
+    
+    th_class = 0.9  #threshold de clase
+    threshold = [0.5,0.8,0.95]  #threshold de presencia
+
     #Se lee el archivo csv con los genomas
     df_genome = pd.read_csv(file_csv, sep=';')
-    specie = df_genome['Species'].loc[idx-1]
     #Se determina cual es el genoma que se desea estudiar a partir del indice en el csv
+    specie = df_genome['Species'].loc[idx-1]
     query = str(specie.replace(' ','_')+'.txt')
-    path_query = find(query, path_anotation)
+    path_query = find(query, path_anotation) #Ruta del archivo de anotación
 
     if path_query is not None:
+        #Se lee el archivo de anotación de la especie
         df_groundTrue = pd.read_csv(path_query, sep='\t')
         df_groundTrue.columns = [i.replace(' ','') for i in list(df_groundTrue.columns)]
         df_groundTrue.set_index(df_groundTrue['Chromosome'], drop=True, inplace=True)
@@ -150,13 +166,19 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
     df_pred.set_index(df_pred['id'], drop=True, inplace=True)
     df_pred[['ProbabilityPresence','ProbabilityClass']] = df_pred[['ProbabilityPresence','ProbabilityClass']].astype(np.float32)
     
-    #El archivo se limita a aquellas anotaciones que superaron una probabilidad de clase superior al threshold
+    #El archivo se limita a aquellas anotaciones que superaron una probabilidad de clase superior al threshold de clase 
     df_pred = df_pred.loc[df_pred['ProbabilityClass']>th_class]
+    
+    #Se abre un archivo donde se guardarán las métricas
     file = open(name_file, 'w')
     file.write(f'Analysis for the species of {specie} \n')
     file.write(f'Domain \t Threshold \t Precision \t Recall \t F1_score \n')
+
+    #Se crean un diccionario con una lista que corresponde a los TP,FP,FN para cada threshold
     scores = {th:np.array([0,0,0]) for th in threshold}
     scores['type'] = domain.upper() 
+    
+    #Se determina si se hará un análisis para todos los dominios o solo uno en particular
     if domain.upper() != 'ALL':
         df_groundT, df_predict = extract_dom(domain=domain, groundT=df_groundTrue.copy(), pred=df_pred.copy())
         ids = extract_ids(groundT=df_groundT, pred=df_predict) 
@@ -181,5 +203,5 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
             precisionGlobal = scores[th][0]/(scores[th][0] + scores[th][1]+ K.epsilon())
             recallGlobal = scores[th][0]/(scores[th][0] + scores[th][2] + K.epsilon())
             f1Global = 2*precisionGlobal*recallGlobal/(precisionGlobal + recallGlobal + K.epsilon())
-            file.write(f'GLOBAL \t {th} \t {precisionGlobal} \t {recallGlobal} \t {f1Global} \n')
-            file.write(f'confusion: {th} \t overallTP: {scores[th][0]} \t overallFP: {scores[th][1]} \t overallFN: {scores[th][2]}\n')
+            file.write(f'Global \t {th} \t {precisionGlobal} \t {recallGlobal} \t {f1Global} \n')
+            #file.write(f'confusion: {th} \t overallTP: {scores[th][0]} \t overallFP: {scores[th][1]} \t overallFN: {scores[th][2]}\n')

@@ -327,7 +327,6 @@ def IOU(box1,box2,size1,size2):
     return iou
 
 def NMS(Yhat, threshold_presence, threshold_NMS):
-
   """
   NMS(Yhat, threshold_presence, threshold_NMS)
   Esta función realiza la operación del non-Max Suppression para las prediccio-
@@ -354,19 +353,28 @@ def NMS(Yhat, threshold_presence, threshold_NMS):
     data_mod = np.copy(data_pred[0,:,0])
     cont=1
     while cont>0:
-      ind = np.where(data_mod == np.amax(data_mod))
-      ind_max = ind[0][0]
-      for i in range(data_pred.shape[1]):
-        if i!=ind_max:
-          box1=[data_pred[0,ind_max,1],data_pred[0,ind_max,2],ind_max]
+      try:
+        ind_first = np.nonzero(data_mod)[0][0]
+      except:
+        break
+      ind_nonzero = np.nonzero(data_mod)[0][1:]
+      for i in ind_nonzero:
+          box1=[data_pred[0,ind_first,1],data_pred[0,ind_first,2],ind_first]
           box2=[data_pred[0,i,1],data_pred[0,i,2],i]
-          size1=dicc_size[np.nonzero(data_pred[0,ind_max,3:10]==np.amax(data_pred[0,ind_max,3:10]))[0][0]]
-          size2=dicc_size[np.nonzero(data_pred[0,i,3:10]==np.amax(data_pred[0,i,3:10]))[0][0]]
+          size1=dicc_size[np.argmax(data_pred[0,ind_first,3:])]
+          size2=dicc_size[np.argmax(data_pred[0,i,3:])]
           iou = IOU(box1,box2,size1,size2)
           if iou>=threshold_NMS:
-            data_pred[0,i,:]=0
-            data_mod[i]=0
-      data_mod[ind_max]=0
-      cont=np.sum(data_mod)
+            if data_mod[i]>data_mod[ind_first]:
+              data_pred[0,ind_first,:]=0
+              data_mod[ind_first]=0
+              break
+            else:
+              data_pred[0,i,:]=0
+              data_mod[i]=0
+          else:
+            data_mod[ind_first]=0
+            break
+      cont=np.sum(ind_nonzero)
     Yhat_new[index,:,:,:]=data_pred
   return Yhat_new
