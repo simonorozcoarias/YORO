@@ -159,11 +159,11 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
         df_groundTrue.set_index(df_groundTrue['Chromosome'], drop=True, inplace=True)
     else:
         print('ERROR: no se encontro la ruta del archivo de anotacion')
-    
+        sys.exit(1)
     #Se lee el archivo .tab generado por la red
     df_pred = pd.read_csv(path_pred, sep='\t').replace({' ':''}, regex=True)
     df_pred.columns = [i.replace(' ','').replace('|','') for i in list(df_pred.columns)]
-    df_pred.set_index(df_pred['id'], drop=True, inplace=True)
+    df_pred.set_index('id', drop=True, inplace=True)
     df_pred[['ProbabilityPresence','ProbabilityClass']] = df_pred[['ProbabilityPresence','ProbabilityClass']].astype(np.float32)
     
     #El archivo se limita a aquellas anotaciones que superaron una probabilidad de clase superior al threshold de clase 

@@ -76,7 +76,6 @@ def main():
     path_anotation = 'metrics/dataset_intact_LTR-RT'
     idx = options.index
     domain = 'all'
-    analysisName = 'analysis.tab'
 
     if file is None:
         print("Please insert at least a file in FASTA format")
@@ -198,8 +197,8 @@ def main():
         print("File Writting time elapsed: {}s".format(finish1))
 
         begin1 = time.time() 
-        path_pred_anot = outputDir+'/'+filename.replace('.tab','out')
-        path_analysis = outputDir+'/'+analysisName
+        path_pred_anot = filename
+        path_analysis = filename.replace('tab','out')
         analysis(file_csv, path_anotation, idx, path_pred_anot, domain, path_analysis)
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)

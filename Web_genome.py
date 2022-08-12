@@ -58,12 +58,6 @@ def unique_webpage(df_genome, count=False):
             print(j,': ',df_genome["Data sources"].loc[df_genome["Data sources"].str.contains(j, case=False)].count())
     return pages
 
-def find(name, path):
-    for root, dirs, files in os.walk(path, topdown=False):
-        if files:
-            if name in files[0]:
-                return os.path.join(root, files[0])
-
 def download(df_genome,path_save,sample,timeout,index):
     if sample != -1:
         sample = random.sample(range(301),sample)
@@ -146,7 +140,7 @@ def download(df_genome,path_save,sample,timeout,index):
 df_genome = pd.read_csv(file_csv, sep=';')
 links_unique = unique_webpage(df_genome, count=False)
 names = download(df_genome,path_save,sample=samples,timeout=timeout,index=idx)
-path_query = find(names, 'metrics/dataset_intact_LTR-RT')
+path_query = find(names[0].replace('fasta','txt'), 'metrics/dataset_intact_LTR-RT')
 
 #Validación de si el archivo descargado coincide con el de anotación
 if names is not None:

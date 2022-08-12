@@ -18,27 +18,30 @@ source ~/.bashrc
 unset PYTHONPATH
 conda activate YoloDNA
 
-for i in {1..1}
+#INGRESE LOS INDICES DE LAS SECUENCIAS QUE DESEA EJECUTAR
+for i in 85 187 189
 do
-    echo "Descargando secuencia $i"
-    
+    #echo "Descargando secuencia $i"
+
     conda deactivate
     conda activate YoloDNA
-    
+
     python3 Web_genome.py -c "metrics/genomes_links.csv" -T 100 -i $i
     filename=`ls *.fasta`
     flag=`cut -f1 ERROR.txt`
-        if [ "$flag" == "TRUE" ] 
-                then
-                rm -f ERROR.txt
-                break
-                fi
-    rm -f ERROR.txt
+    if [ "$flag" == "TRUE" ]
+    then
+        rm -f ERROR.txt
+        echo "La secuencia $filename fallo"
+    else
+        rm -f ERROR.txt
+        size=´du -sh $filename´
+        echo "El tamano del genoma $filename es: $size"
+        conda deactivate
+        conda activate YoloDNA2
 
-    conda deactivate
-    conda activate YoloDNA2
-
-    echo "Ejecutando el genoma ${filename} secuencia $i"
-    python3 pipelineDomain.py -f $filename -o ${filename/fasta/tab} -t 0.5 -x $i
-    rm -f $filename
+        echo "Ejecutando el genoma ${filename} secuencia $i"
+        python3 pipelineDomain.py -f $filename -o ${filename/fasta/tab} -t 0.5 -x $i
+        rm -f $filename
+    fi
 done
