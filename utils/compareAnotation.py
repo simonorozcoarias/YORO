@@ -142,7 +142,7 @@ def metrics(threshold, df_groundT, df_pred, ids):
 
 def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
     
-    th_class = 0.9  #threshold de clase
+    threshold_class = [0.5,0,8,0.95]  #threshold de clase
     threshold = [0.5,0.8,0.95]  #threshold de presencia
 
     #Se lee el archivo csv con los genomas
@@ -156,7 +156,7 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
         #Se lee el archivo de anotación de la especie
         df_groundTrue = pd.read_csv(path_query, sep='\t')
         df_groundTrue.columns = [i.replace(' ','') for i in list(df_groundTrue.columns)]
-        df_groundTrue.set_index(df_groundTrue['Chromosome'], drop=True, inplace=True)
+        df_groundTrue.set_index('Chromosome', drop=True, inplace=True)
     else:
         print('ERROR: no se encontro la ruta del archivo de anotacion')
         sys.exit(1)
@@ -166,42 +166,41 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
     df_pred.set_index('id', drop=True, inplace=True)
     df_pred[['ProbabilityPresence','ProbabilityClass']] = df_pred[['ProbabilityPresence','ProbabilityClass']].astype(np.float32)
     
-    #El archivo se limita a aquellas anotaciones que superaron una probabilidad de clase superior al threshold de clase 
-    df_pred = df_pred.loc[df_pred['ProbabilityClass']>th_class]
-    
     #Se abre un archivo donde se guardarán las métricas
     file = open(name_file, 'w')
-    file.write(f'Analysis for the species of {specie} \n')
-    file.write(f'Domain \t Threshold \t Precision \t Recall \t F1_score \n')
+    #El archivo se limita a aquellas anotaciones que superaron una probabilidad de clase superior al threshold de clase 
+    for th_class in threshold_class:
+        df_pred = df_pred.loc[df_pred['ProbabilityClass']>th_class]
+        file.write(f'Analysis for the specie of {specie} con un threshold de clase de {th_class}\n')
+        file.write(f'Domain \t Threshold \t Precision \t Recall \t F1_score \n')
 
-    #Se crean un diccionario con una lista que corresponde a los TP,FP,FN para cada threshold
-    scores = {th:np.array([0,0,0]) for th in threshold}
-    scores['type'] = domain.upper() 
-    
-    #Se determina si se hará un análisis para todos los dominios o solo uno en particular
-    if domain.upper() != 'ALL':
-        df_groundT, df_predict = extract_dom(domain=domain, groundT=df_groundTrue.copy(), pred=df_pred.copy())
-        ids = extract_ids(groundT=df_groundT, pred=df_predict) 
-        for th in threshold:
-            Precision, Recall, f1, list_scores = metrics(th, df_groundT=df_groundT, df_pred=df_predict, ids=ids)
-            scores[th] = scores[th] + list_scores
-            file.write(f'{domain} \t {th} \t {Precision} \t {Recall} \t {f1} \n')
-            print(f'Metricas con un threshold de: {th} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
-    else:
-        domains = ['GAG','RT','RNASEH','INT','AP','LTR']
-        for dom in domains:
-            df_groundT, df_predict = extract_dom(domain=dom, groundT=df_groundTrue.copy(), pred=df_pred.copy())
-            ids = extract_ids(groundT=df_groundT, pred=df_predict)  
-            #print('Dominio: ',dom) #,'df_groundT: ',df_groundT, 'Prediccion',df_predict)
+        #Se crean un diccionario con una lista que corresponde a los TP,FP,FN para cada threshold
+        scores = {th:np.array([0,0,0]) for th in threshold}
+        
+        #Se determina si se hará un análisis para todos los dominios o solo uno en particular
+        if domain.upper() != 'ALL':
+            df_groundT, df_predict = extract_dom(domain=domain, groundT=df_groundTrue.copy(), pred=df_pred.copy())
+            ids = extract_ids(groundT=df_groundT, pred=df_predict) 
             for th in threshold:
-                #file.write(f'Thershold {th} \n')
                 Precision, Recall, f1, list_scores = metrics(th, df_groundT=df_groundT, df_pred=df_predict, ids=ids)
                 scores[th] = scores[th] + list_scores
-                file.write(f'{dom} \t {th} \t {Precision} \t {Recall} \t {f1} \n')
-                #print(f'Metricas con un threshold de {th} para el dominio {dom} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
-        for th in threshold:
-            precisionGlobal = scores[th][0]/(scores[th][0] + scores[th][1]+ K.epsilon())
-            recallGlobal = scores[th][0]/(scores[th][0] + scores[th][2] + K.epsilon())
-            f1Global = 2*precisionGlobal*recallGlobal/(precisionGlobal + recallGlobal + K.epsilon())
-            file.write(f'Global \t {th} \t {precisionGlobal} \t {recallGlobal} \t {f1Global} \n')
-            #file.write(f'confusion: {th} \t overallTP: {scores[th][0]} \t overallFP: {scores[th][1]} \t overallFN: {scores[th][2]}\n')
+                file.write(f'{domain} \t {th} \t {Precision} \t {Recall} \t {f1} \n')
+                print(f'Metricas con un threshold de: {th} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
+        else:
+            domains = ['GAG','RT','RNASEH','INT','AP','LTR']
+            for dom in domains[:-1]:
+                df_groundT, df_predict = extract_dom(domain=dom, groundT=df_groundTrue.copy(), pred=df_pred.copy())
+                ids = extract_ids(groundT=df_groundT, pred=df_predict)  
+                #print('Dominio: ',dom) #,'df_groundT: ',df_groundT, 'Prediccion',df_predict)
+                for th in threshold:
+                    #file.write(f'Thershold {th} \n')
+                    Precision, Recall, f1, list_scores = metrics(th, df_groundT=df_groundT, df_pred=df_predict, ids=ids)
+                    scores[th] = scores[th] + list_scores
+                    file.write(f'{dom} \t {th} \t {Precision} \t {Recall} \t {f1} \n')
+                    #print(f'Metricas con un threshold de {th} para el dominio {dom} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
+            for th in threshold:
+                precisionGlobal = scores[th][0]/(scores[th][0] + scores[th][1]+ K.epsilon())
+                recallGlobal = scores[th][0]/(scores[th][0] + scores[th][2] + K.epsilon())
+                f1Global = 2*precisionGlobal*recallGlobal/(precisionGlobal + recallGlobal + K.epsilon())
+                file.write(f'Global \t {th} \t {precisionGlobal} \t {recallGlobal} \t {f1Global} \n\n\n')
+                #file.write(f'confusion: {th} \t overallTP: {scores[th][0]} \t overallFP: {scores[th][1]} \t overallFN: {scores[th][2]}\n')

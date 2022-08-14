@@ -130,7 +130,7 @@ def main():
             print("An exception ocurred, the weigth file does not exist, please set a correct filenaname!")
             sys.exit(1)
     else:
-        modelFilepath = 'models/ALL_DOMAINS_REDUNDANTYOLO_domain_v15.hdf5'
+        modelFilepath = 'models/AAYOLO_domain_v17.hdf5'
 
     # Cycles for detection
     slide_win = int(total_win_len / cycles)
