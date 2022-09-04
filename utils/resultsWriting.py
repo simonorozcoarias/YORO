@@ -27,7 +27,7 @@ def tabGeneration(resfile,Yhat_pred,list_ids,window,threshold_presence):
                 #print("Está ubicado en la pos {} de la secuencia".format(localIni))
                 clasNum = np.argmax(Yhat_pred[idx,0,hundred,3:])+3
                 #print("la longitud del elemento es: {}".format(longitud))
-                longitud = Yhat_pred[idx,0,hundred,2]*longNormal[clasNum]
+                longitud = int(Yhat_pred[idx,0,hundred,2]*longNormal[clasNum])
 
                 #print("la mejor clase es: ",classes[clasNum])
                 resultado.write(f"{list_ids[idx].split('#')[0]}\t {Yhat_pred[idx,0,hundred,0]}\t {localIni}\t {longitud}\t {classes[clasNum]}\t {np.amax(Yhat_pred[idx,0,hundred,3:])}\n")
@@ -35,3 +35,12 @@ def tabGeneration(resfile,Yhat_pred,list_ids,window,threshold_presence):
     print("File writted sucessfully!!")
 
     return resfile
+
+
+
+salida = []
+for i in file1:
+    if i in file2:
+        salida.append(i)
+
+print(salida)

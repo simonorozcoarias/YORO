@@ -9,6 +9,56 @@ from Bio import SeqIO
 from tensorflow.keras import backend as K 
 import time
 
+def IOU(box1,box2,size1,size2):
+
+    pi1,len1,n1 = box1
+    pi2,len2,n2 = box2
+
+    pi1=(pi1+n1)*100
+    pf1=pi1+len1*size1
+    pi2=(pi2+n2)*100
+    pf2=pi2+len2*size2
+    xi1 = max([pi1,pi2])
+    xi2 = min([pf1,pf2])
+    inter_width = xi2-xi1
+    inter_area = max([inter_width,0])
+    box1_area = len1*size1
+    box2_area = len2*size2
+    union_area = box1_area+box2_area-inter_area
+    iou = inter_area/(union_area + K.epsilon())
+    return iou
+
+def NMS(Yhat, threshold_presence, threshold_NMS, dicc_size):
+    mascara = (Yhat[:,0:1]>=threshold_presence)*1
+    data_pred = mascara*Yhat
+    data_mod = np.copy(data_pred[:,0])
+    cont=1
+    while cont>0:
+        try:
+            ind_first = np.nonzero(data_mod)[0][0]
+        except:
+            break
+        ind_nonzero = np.nonzero(data_mod)[0][1:]
+        for i in ind_nonzero:
+            box1=[data_pred[ind_first,1],data_pred[ind_first,2],ind_first]
+            box2=[data_pred[i,1],data_pred[i,2],i]
+            size1=dicc_size[np.argmax(data_pred[ind_first,3:])]
+            size2=dicc_size[np.argmax(data_pred[i,3:])]
+            iou = IOU(box1,box2,size1,size2)
+            if iou>=threshold_NMS:
+                if data_mod[i]>data_mod[ind_first]:
+                    data_pred[ind_first,:]=0
+                    data_mod[ind_first]=0
+                    break
+                else:
+                    data_pred[i,:]=0
+                    data_mod[i]=0
+            else:
+                data_mod[ind_first]=0
+                break
+        cont=np.sum(ind_nonzero)
+    return data_pred
+
 def clean_file(df_genome):
     """
     Se elimina la información de los genomas que no poseen un link al genoma y se reemplazan los espacios
@@ -55,32 +105,13 @@ def extract_dom(domain, groundT, pred):
         pos_pred = pred.loc[pred['Class']==domains_pred[5]]
     return pos_groundT, pos_pred
 
-
 def extract_ids(groundT, pred):
-    """
-    Esta función determina los ids unicos donde se predice el dominio de interes 
-    tanto para la anotación de predicción como para la anotación groundTrue
-
-    Args:
-        groundT (dataframe): contiene la información de la anotación groundTrue 
-        para un dominio en especifico
-        
-        pred (dataframe): contiiene la información de la anotación de predicción 
-        para un dominio en especifico
-
-    Returns:
-        list: lista que contiene los ids unicos para ambas anotaciones
-    """
-    if groundT.empty==True and pred.empty==True:
-        ids = []
-    elif groundT.empty==False:
-        ids = groundT.index.unique().tolist()
-    elif pred.empty==False:
-        ids = pred.index.unique().tolist()
-    else:
-        ids = groundT.index.unique().tolist()
-        ids.append(pred.index.unique().tolist())
-    return ids
+    ids_pred = pred.index.unique().tolist()
+    ids_ground = groundT.index.unique().tolist()
+    ids_union = ids_pred and ids_ground
+    ids_pred_unique = list(set(ids_pred) - set(ids_union))
+    ids_ground_unique = list(set(ids_ground) - set(ids_union))
+    return ids_pred_unique, ids_ground_unique, ids_union
 
 def positions(df_init,df_end, id):
     try:
@@ -101,48 +132,107 @@ def nucleotide(start, end, array_start=[], array_end=[]):
         vect[dom_init-start:dom_end-start+1] = 1
     return vect
 
-def metrics(threshold, df_groundT, df_pred, ids):
-    pred_th = df_pred.loc[df_pred['ProbabilityPresence']>=threshold].copy()
-    TP = 0; FP = 0; FN = 0
-    for id in ids:
-        #print('ID: ',id)
-        true_start, true_end = positions(df_groundT['Start'], df_groundT['Length(bp)'],id)
-        pred_start, pred_end = positions(pred_th['Start'], pred_th['Length'],id)
-        if true_start is None and pred_end is not None:
-            l_start = np.min(pred_start)
-            l_end = np.max(pred_end)
-            true_vect = nucleotide(l_start, l_end)
-            pred_vect = nucleotide(l_start, l_end, pred_start, pred_end)
-        elif pred_start is None and true_start is not None:
-            l_start = np.min(true_start)
-            l_end = np.max(true_end)
-            true_vect = nucleotide(l_start, l_end, true_start, true_end)
-            pred_vect = nucleotide(l_start, l_end)
-        elif true_start is not None and pred_start is not None:
-            #print(f'Start min: {true_start} fin min: {true_end}')
-            #print('Start:', [np.min(true_start),np.min(pred_start)])
-            l_start = np.min([np.min(true_start),np.min(pred_start)])
-            l_end = np.max([np.max(true_end),np.max(pred_end)])
-            true_vect = nucleotide(l_start, l_end, true_start, true_end)
-            pred_vect = nucleotide(l_start, l_end, pred_start, pred_end)
-        else:
-            #print('Error: no se logro los dominios para el id: ',id)
-            #print('Salida: ',df_groundT.loc[id])
+def nt_TE(y,ventana,threshold_presence, dicc_size,distancia=30):
+
+    nucleotidos = np.zeros((ventana))
+    mask = (y[:,0:1]>=threshold_presence)*1
+    valores =[]
+    indices = np.nonzero(mask[:,0])[0]
+    for h in range(len(indices)):
+        size = dicc_size[np.nonzero(y[indices[h],3:]==np.amax(y[indices[h],3:]))[0][0]]
+        if h!=0 and (indices[h]-indices[h-1])<distancia:
+            j1=indices[h-1]
+            j2=indices[h]
+            inicio = int(j1*100+y[j1,1]*100)
+            inicio2=int(j2*100+y[j2,1]*100)
+            fin = int(inicio2+y[j2,2]*size)
+            nucleotidos[inicio:fin]=1
+    return nucleotidos
+
+def revert_gff(start, length, domains, min_size, max_size, longNormal, classes):
+    start = start-min_size
+    array = np.zeros((np.ceil((max_size-min_size)/100).astype(int),10))
+    if type(start)==np.ndarray:
+        for i in range(len(start)):
+            start_value = int(start[i]/100)
+            array[start_value,0] = 1
+            array[start_value,1] = (start[i]-int(start[i]/100)*100)/100
+            array[start_value,2] = length[i]/longNormal[classes[domains[i]]]
+            array[start_value,classes[domains[i]]] = 1
+        return array
+    else:
+        return None
+
+def renames_gff(df, original_domains):
+    for i in original_domains.keys():
+        df.replace(i,original_domains[i],inplace=True)
+
+def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, longNormal, classes, dicc_size):
+    TP = 0; FP = 0; FN = 0; TN=0
+    for id in union_ids:
+        Y_ground = df_groundT.loc[id].copy()
+        Y_pred = df_pred.loc[id].copy()
+        min_true, min_pred = Y_ground['Start'].min(), Y_pred['Start'].min()
+        max_true, max_pred = Y_ground['Length(bp)'].max()+Y_ground['Start'].max(), Y_pred['Length'].max()+Y_pred['Start'].max()
+
+        min_size = min(min_true, min_pred)
+        max_size = max(max_true, max_pred)
+
+        Y_true = revert_gff(np.array(Y_ground["Start"]), np.array(Y_ground["Length(bp)"]), np.array(Y_ground["Domain"]), min_size, max_size, longNormal, classes)
+        if Y_true is None:
+            print("PROBLEMA")
             continue
-        #print(end-init) #Longitud de la ventana
-        TP_window = np.sum(true_vect*pred_vect)
+        Y_pred = revert_gff(np.array(Y_pred["Start"]).astype(int), np.array(Y_pred["Length"]).astype(int), np.array(Y_pred["Class"]), min_size, max_size, longNormal, classes)
+        Y_pred = NMS(Y_pred, threshold, 0.1, dicc_size)
+        Y_true_nt = nt_TE(Y_true,np.ceil((max_size-min_size)/100).astype(int),threshold, dicc_size)
+        Y_pred_nt = nt_TE(Y_pred,np.ceil((max_size-min_size)/100).astype(int),threshold, dicc_size)
+        TP_window = np.sum(Y_true_nt*Y_pred_nt)
         TP += TP_window
-        FP += np.sum(pred_vect)-TP_window
-        FN += np.sum(true_vect)-TP_window
-    list_scores = [TP,FP,FN]
+        FP += np.sum(Y_pred_nt)-TP_window
+        FN += np.sum(Y_true_nt)-TP_window
+        TN += Y_true_nt.shape[0]-TP_window-(np.sum(Y_pred_nt)-TP_window)-(np.sum(Y_true_nt)-TP_window)
+    
+    for id in pred_ids:
+        Y_pred = df_pred.loc[id].copy()
+        min_pred = Y_pred['Start'].min()
+        max_pred = Y_pred['Length'].max()+Y_pred['Start'].max()
+        Y_pred = revert_gff(np.array(Y_pred["Start"]).astype(int), np.array(Y_pred["Length"]).astype(int), np.array(Y_pred["Class"]), min_pred, max_pred, longNormal, classes)
+        if Y_pred is None:
+            continue
+        Y_pred = NMS(Y_pred, threshold, 0.1)
+        Y_pred_nt = nt_TE(Y_pred,np.ceil((max_size-min_size)/100).astype(int),threshold)
+        TP_window = 0
+        TP += 0
+        FP += np.sum(Y_pred_nt)-TP_window
+        FN += 0
+        TN += Y_pred_nt.shape[0]-TP_window-(np.sum(Y_pred_nt)-TP_window)    
+    
+    for id in ground_ids:
+        Y_ground = df_groundT.loc[id].copy()
+        min_true = Y_ground['Start'].min()
+        max_true = Y_ground['Length(bp)'].max()+Y_ground['Start'].max()
+
+        Y_true = revert_gff(np.array(Y_ground["Start"]), np.array(Y_ground["Length(bp)"]), np.array(Y_ground["Domain"]), min_true, max_true, longNormal, classes)
+        if Y_true is None:
+            continue
+        Y_true_nt = nt_TE(Y_true,np.ceil((max_size-min_size)/100).astype(int),threshold)
+        TP_window = 0
+        TP += TP_window
+        FP += 0
+        FN += np.sum(Y_true_nt)-TP_window
+        TN += Y_true_nt.shape[0]-TP_window-0-(np.sum(Y_true_nt)-TP_window)
+
     Precision = TP/(TP+FP+K.epsilon())
     Recall = TP/(TP+FN+K.epsilon())
-    f1 = 2*Precision*Recall/(Precision+Recall+K.epsilon())
-    return round(Precision,3), round(Recall,3), round(f1,3), list_scores
+    Accuracy = (TP + TN)/ (TP + FN + TN + FP+K.epsilon())
+    F1 = 2* Precision*Recall/(Precision + Recall+K.epsilon())
+    return Precision, Recall, Accuracy, F1
 
-def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
-    
-    threshold_class = [0.5,0,8,0.95]  #threshold de clase
+def analysis(file_csv, path_anotation, idx, path_pred, name_file):
+    dicc_size={0:1000,1:3000,2:2000,3:2000,4:1000,5:1000,6:10000}
+    classes = {"RT":3,"GAG":4,"ENV":5,"INT":6,"AP":7,"RNASEH":8,"LTR":9}
+    longNormal = {3:1000,4:3000,5:2000,6:2000,7:1000,8:1000,9:10000}
+    original_domains = {'RH':'RNASEH','aRH':'RNASEH','RH/aRH':'RNASEH','PROT':'AP','intact_5ltr':'LTR','intact_3ltr':'LTR'}
     threshold = [0.5,0.8,0.95]  #threshold de presencia
 
     #Se lee el archivo csv con los genomas
@@ -157,6 +247,14 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
         df_groundTrue = pd.read_csv(path_query, sep='\t')
         df_groundTrue.columns = [i.replace(' ','') for i in list(df_groundTrue.columns)]
         df_groundTrue.set_index('Chromosome', drop=True, inplace=True)
+        renames_gff(df_groundTrue, original_domains)
+        df_groundTrue = df_groundTrue.loc[
+            (df_groundTrue['Domain']=='GAG')|
+            (df_groundTrue['Domain']=='RT')|
+            (df_groundTrue['Domain']=='RNASEH')|
+            (df_groundTrue['Domain']=='INT')|
+            (df_groundTrue['Domain']=='AP')
+        ]
     else:
         print('ERROR: no se encontro la ruta del archivo de anotacion')
         sys.exit(1)
@@ -164,43 +262,29 @@ def analysis(file_csv, path_anotation, idx, path_pred, domain, name_file):
     df_pred = pd.read_csv(path_pred, sep='\t').replace({' ':''}, regex=True)
     df_pred.columns = [i.replace(' ','').replace('|','') for i in list(df_pred.columns)]
     df_pred.set_index('id', drop=True, inplace=True)
+    df_pred = df_pred.loc[
+        (df_pred['Domain']=='GAG')|
+        (df_pred['Domain']=='RT')|
+        (df_pred['Domain']=='RNASEH')|
+        (df_pred['Domain']=='INT')|
+        (df_pred['Domain']=='AP')
+    ]
     df_pred[['ProbabilityPresence','ProbabilityClass']] = df_pred[['ProbabilityPresence','ProbabilityClass']].astype(np.float32)
     
     #Se abre un archivo donde se guardarán las métricas
     file = open(name_file, 'w')
-    #El archivo se limita a aquellas anotaciones que superaron una probabilidad de clase superior al threshold de clase 
-    for th_class in threshold_class:
-        df_pred = df_pred.loc[df_pred['ProbabilityClass']>th_class]
-        file.write(f'Analysis for the specie of {specie} con un threshold de clase de {th_class}\n')
-        file.write(f'Domain \t Threshold \t Precision \t Recall \t F1_score \n')
+    
+    #for th_class in threshold_class:
+    file.write(f'Analysis for the specie of {specie}\n\n')
 
-        #Se crean un diccionario con una lista que corresponde a los TP,FP,FN para cada threshold
-        scores = {th:np.array([0,0,0]) for th in threshold}
-        
-        #Se determina si se hará un análisis para todos los dominios o solo uno en particular
-        if domain.upper() != 'ALL':
-            df_groundT, df_predict = extract_dom(domain=domain, groundT=df_groundTrue.copy(), pred=df_pred.copy())
-            ids = extract_ids(groundT=df_groundT, pred=df_predict) 
-            for th in threshold:
-                Precision, Recall, f1, list_scores = metrics(th, df_groundT=df_groundT, df_pred=df_predict, ids=ids)
-                scores[th] = scores[th] + list_scores
-                file.write(f'{domain} \t {th} \t {Precision} \t {Recall} \t {f1} \n')
-                print(f'Metricas con un threshold de: {th} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
-        else:
-            domains = ['GAG','RT','RNASEH','INT','AP','LTR']
-            for dom in domains[:-1]:
-                df_groundT, df_predict = extract_dom(domain=dom, groundT=df_groundTrue.copy(), pred=df_pred.copy())
-                ids = extract_ids(groundT=df_groundT, pred=df_predict)  
-                #print('Dominio: ',dom) #,'df_groundT: ',df_groundT, 'Prediccion',df_predict)
-                for th in threshold:
-                    #file.write(f'Thershold {th} \n')
-                    Precision, Recall, f1, list_scores = metrics(th, df_groundT=df_groundT, df_pred=df_predict, ids=ids)
-                    scores[th] = scores[th] + list_scores
-                    file.write(f'{dom} \t {th} \t {Precision} \t {Recall} \t {f1} \n')
-                    #print(f'Metricas con un threshold de {th} para el dominio {dom} \n Precision: {Precision} \n Recall: {Recall} \n f1: {f1} \n')
-            for th in threshold:
-                precisionGlobal = scores[th][0]/(scores[th][0] + scores[th][1]+ K.epsilon())
-                recallGlobal = scores[th][0]/(scores[th][0] + scores[th][2] + K.epsilon())
-                f1Global = 2*precisionGlobal*recallGlobal/(precisionGlobal + recallGlobal + K.epsilon())
-                file.write(f'Global \t {th} \t {precisionGlobal} \t {recallGlobal} \t {f1Global} \n\n\n')
-                #file.write(f'confusion: {th} \t overallTP: {scores[th][0]} \t overallFP: {scores[th][1]} \t overallFN: {scores[th][2]}\n')
+    #Se crean un diccionario con una lista que corresponde a los TP,FP,FN para cada threshold
+    #scores = {th:np.array([0,0,0]) for th in threshold}
+    
+    pred_ids,ground_ids,union_ids = extract_ids(groundT=df_groundTrue, pred=df_pred)  
+    file.write(f'Numero de ids unicos para el archivo de prediccion: {len(pred_ids)}\n')
+    file.write(f'Numero de ids unicos para el archivo de ground True: {len(ground_ids)}\n')
+    file.write(f'Numero de ids que se comparten en los dos archivos: {len(union_ids)}\n')
+    for th in threshold:
+        file.write("\nMetricas para un threshold de {th}\n\n")
+        Precision, Recall, Accuracy, F1 = metrics(th, df_groundTrue, df_pred, union_ids, pred_ids, ground_ids, dicc_size, classes, longNormal)
+        file.write(f"Precision: {Precision} \nRecall: {Recall}\nAccuracy: {Accuracy}\nF1: {F1}\n")

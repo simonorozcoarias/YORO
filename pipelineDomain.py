@@ -75,7 +75,6 @@ def main():
     file_csv = 'metrics/genomes_links.csv'
     path_anotation = 'metrics/dataset_intact_LTR-RT'
     idx = options.index
-    domain = 'all'
 
     if file is None:
         print("Please insert at least a file in FASTA format")
@@ -199,11 +198,10 @@ def main():
         begin1 = time.time() 
         path_pred_anot = filename
         path_analysis = filename.replace('tab','out')
-        analysis(file_csv, path_anotation, idx, path_pred_anot, domain, path_analysis)
+        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis)
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
         print("Analysis Executed: time elapsed: {}s".format(finish1))
-
 
     finish = time.time() - begin
     print("Total time elapsed for pipeline execution: {}s ".format(finish))

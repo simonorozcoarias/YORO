@@ -147,16 +147,16 @@ if names is not None:
     if path_query is not None:
         df_anot = pd.read_csv(path_query, sep='\t')
         df_anot.columns = [i.replace(' ','') for i in list(df_anot.columns)]
-        id_anot = df_anot['Chromosome'].tolist()[0]
-        id_fasta = list(SeqIO.parse(path_save+'/'+names[0], 'fasta'))
-        #print('anot: ',id_anot)
-        #print([i.id for i in id_fasta[:6]])
-        if id_anot not in [i.id for i in id_fasta]:
-            f = open('ERROR.txt','w').write('TRUE')
-            print("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
-            sys.exit(1)
-        else:
-            f = open('ERROR.txt','w').write('FALSE')
+        id_anot = df_anot['Chromosome'].unique().tolist()
+        seq = list(SeqIO.parse(path_save+'/'+names[0], 'fasta'))
+        id_fasta = [i.id for i in seq]
+        #Se comprueba que al menos la ventiaba parte de los indices del archivo de anotación correspondan al archio fasta
+        check = random.sample(id_anot, int(len(id_anot)/5))
+        for j in check:
+            if j not in id_fasta:
+                f = open('ERROR.txt','w').write('TRUE')
+                sys.exit("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
+        f = open('ERROR.txt','w').write('FALSE')
     else:
         print("No encontro el archivo de anotación")
         f=open('ERROR.txt','w').write('TRUE')
