@@ -26,7 +26,7 @@ do
 
     python3 Web_genome.py -c "metrics/genomes_links.csv" -T 500 -i $i
     filename=`ls *.fasta`
-    flag=`cut -f1 ERROR.txt`
+    flag=,`cut -f1 ERROR.txt`
     if [ "$flag" == "TRUE" ]
     then
         rm -f ERROR.txt
@@ -36,7 +36,7 @@ do
     else
         chmod +777 *.fasta
         rm -f ERROR.txt
-        size=´du -sh "$filename" | cut -f1´
+        size=`du -sh "$filename" | cut -f1`
         echo "El tamano del genoma $filename es: $size"
         conda deactivate
         conda activate YoloDNA2

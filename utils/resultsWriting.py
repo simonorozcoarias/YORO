@@ -36,11 +36,3 @@ def tabGeneration(resfile,Yhat_pred,list_ids,window,threshold_presence):
 
     return resfile
 
-
-
-salida = []
-for i in file1:
-    if i in file2:
-        salida.append(i)
-
-print(salida)
