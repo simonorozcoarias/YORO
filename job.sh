@@ -19,7 +19,7 @@ unset PYTHONPATH
 conda activate YoloDNA
 
 #INGRESE LOS INDICES DE LAS SECUENCIAS QUE DESEA EJECUTAR
-for i in 85 187 189
+for i in 188
 do
     conda deactivate
     conda activate YoloDNA
