@@ -199,8 +199,8 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
         Y_pred = revert_gff(np.array(Y_pred["Start"]).astype(int), np.array(Y_pred["Length"]).astype(int), np.array(Y_pred["Class"]), min_pred, max_pred, longNormal, classes)
         if Y_pred is None:
             continue
-        Y_pred = NMS(Y_pred, threshold, 0.1)
-        Y_pred_nt = nt_TE(Y_pred,np.ceil((max_size-min_size)/100).astype(int),threshold)
+        Y_pred = NMS(Y_pred, threshold, 0.1, dicc_size)
+        Y_pred_nt = nt_TE(Y_pred,np.ceil((max_size-min_size)/100).astype(int), threshold, dicc_size)
         TP_window = 0
         TP += 0
         FP += np.sum(Y_pred_nt)-TP_window
@@ -215,7 +215,7 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
         Y_true = revert_gff(np.array(Y_ground["Start"]), np.array(Y_ground["Length(bp)"]), np.array(Y_ground["Domain"]), min_true, max_true, longNormal, classes)
         if Y_true is None:
             continue
-        Y_true_nt = nt_TE(Y_true,np.ceil((max_size-min_size)/100).astype(int),threshold)
+        Y_true_nt = nt_TE(Y_true,np.ceil((max_size-min_size)/100).astype(int), threshold, dicc_size)
         TP_window = 0
         TP += TP_window
         FP += 0
@@ -263,11 +263,11 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file):
     df_pred.columns = [i.replace(' ','').replace('|','') for i in list(df_pred.columns)]
     df_pred.set_index('id', drop=True, inplace=True)
     df_pred = df_pred.loc[
-        (df_pred['Domain']=='GAG')|
-        (df_pred['Domain']=='RT')|
-        (df_pred['Domain']=='RNASEH')|
-        (df_pred['Domain']=='INT')|
-        (df_pred['Domain']=='AP')
+        (df_pred['Class']=='GAG')|
+        (df_pred['Class']=='RT')|
+        (df_pred['Class']=='RNASEH')|
+        (df_pred['Class']=='INT')|
+        (df_pred['Class']=='AP')
     ]
     df_pred[['ProbabilityPresence','ProbabilityClass']] = df_pred[['ProbabilityPresence','ProbabilityClass']].astype(np.float32)
     
@@ -285,6 +285,6 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file):
     file.write(f'Numero de ids unicos para el archivo de ground True: {len(ground_ids)}\n')
     file.write(f'Numero de ids que se comparten en los dos archivos: {len(union_ids)}\n')
     for th in threshold:
-        file.write("\nMetricas para un threshold de {th}\n\n")
-        Precision, Recall, Accuracy, F1 = metrics(th, df_groundTrue, df_pred, union_ids, pred_ids, ground_ids, dicc_size, classes, longNormal)
+        file.write(f"\nMetricas para un threshold de {th}\n\n")
+        Precision, Recall, Accuracy, F1 = metrics(th, df_groundTrue, df_pred, union_ids, pred_ids, ground_ids, longNormal, classes, dicc_size)
         file.write(f"Precision: {Precision} \nRecall: {Recall}\nAccuracy: {Accuracy}\nF1: {F1}\n")
