@@ -21,7 +21,7 @@ from utils.fastaProcessing import check_nucleotides_master
 from utils.fastaProcessing import create_dataset_master
 
 from utils.deepLutils import loadNNArchitecture
-from utils.deepLutils import NMS
+from utils.deepLutils import NMS, label_LTR
 
 from utils.resultsWriting import tabGeneration
 
@@ -188,6 +188,13 @@ def main():
         Yhat_pred = NMS(Yhat_test, threshold_presence, threshold_NMS)
         finish1 = time.time() - begin1
         print("Non-Max Supression exectuded: time elapsed {}s".format(finish1))
+        
+        begin1 = time.time()
+        label_add = label_LTR(splitted_genome[:,0:4,:],Yhat_pred,threshold_presence)
+        Yhat_pred[:,:,:,0:3]=Yhat_pred[:,:,:,0:3]+label_add[:,:,:,0:3]
+        Yhat_pred = np.concatenate((Yhat_pred,label_add[:,:,:,0:1]),axis=3)
+        finish1 = time.time() - begin1
+        print("LTR detection executed: time elapsed {}s".format(finish1))
 
         begin1 = time.time()
         outputfile = tabGeneration(filename,Yhat_pred,list_ids,total_win_len,threshold_presence)
@@ -195,6 +202,7 @@ def main():
         print("The output of this pipeline was written at: ", outputfile)
         print("File Writting time elapsed: {}s".format(finish1))
 
+        """
         begin1 = time.time() 
         path_pred_anot = filename
         path_analysis = filename.replace('tab','out')
@@ -202,6 +210,7 @@ def main():
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
         print("Analysis Executed: time elapsed: {}s".format(finish1))
+        """
 
     finish = time.time() - begin
     print("Total time elapsed for pipeline execution: {}s ".format(finish))
