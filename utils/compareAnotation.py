@@ -80,31 +80,6 @@ def find(name, path):
         if name in files:
             return os.path.join(root, name)
 
-def extract_dom(domain, groundT, pred):
-    domains_groundT = ['GAG','RT','RH','aRH','RH/aRH','INT','PROT','intact_5ltr','intact_3ltr']
-    domains_pred = ['GAG','RT','RNASEH','INT','AP','LTR']
-    pos_groundT = []
-    pos_pred = []
-    if domain==domains_pred[0]:
-        pos_groundT = groundT.loc[groundT['Domain']==domains_groundT[0]]
-        pos_pred = pred.loc[pred['Class']==domains_pred[0]]
-    elif domain==domains_pred[1]:
-        pos_groundT = groundT.loc[groundT['Domain']==domains_groundT[1]]
-        pos_pred = pred.loc[pred['Class']==domains_pred[1]]
-    elif domain==domains_pred[2]:
-        pos_groundT = groundT.loc[(groundT['Domain']==domains_groundT[2]) | (groundT['Domain']==domains_groundT[3]) | (groundT['Domain']==domains_groundT[4])]
-        pos_pred = pred.loc[pred['Class']==domains_pred[2]]
-    elif domain==domains_pred[3]:
-        pos_groundT = groundT.loc[groundT['Domain']==domains_groundT[5]]
-        pos_pred = pred.loc[pred['Class']==domains_pred[3]]
-    elif domain==domains_pred[4]:
-        pos_groundT = groundT.loc[groundT['Domain']==domains_groundT[6]]
-        pos_pred = pred.loc[pred['Class']==domains_pred[4]]
-    elif domain==domains_pred[5]:
-        pos_groundT = groundT.loc[(groundT['Domain']==domains_groundT[7]) | (groundT['Domain']==domains_groundT[8])]
-        pos_pred = pred.loc[pred['Class']==domains_pred[5]]
-    return pos_groundT, pos_pred
-
 def extract_ids(groundT, pred):
     ids_pred = pred.index.unique().tolist()
     ids_ground = groundT.index.unique().tolist()
@@ -149,6 +124,22 @@ def nt_TE(y,ventana,threshold_presence, dicc_size,distancia=30):
             nucleotidos[inicio:fin]=1
     return nucleotidos
 
+def nt_TE_LTR(y,ventana,threshold_presence, dicc_size):
+    nucleotidos = np.zeros((ventana))
+    #mask = (y[:,0:1]>=threshold_presence)*1
+    #valores =[]
+    indices = np.nonzero(y[:,9])[0]
+    if len(indices)%2==0:
+        for h in range(0,len(indices),2):
+            size = dicc_size[6]
+            j1=indices[h]
+            j2=indices[h+1]
+            inicio = int(j1*100+y[j1,1]*100)
+            inicio2=int(j2*100+y[j2,1]*100)
+            fin = int(inicio2+y[j2,2]*size)
+            nucleotidos[inicio:fin]=1
+    return nucleotidos
+
 def revert_gff(start, length, domains, min_size, max_size, longNormal, classes):
     start = start-min_size
     array = np.zeros((np.ceil((max_size-min_size)/100).astype(int),10))
@@ -184,8 +175,8 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
             continue
         Y_pred = revert_gff(np.array(Y_pred["Start"]).astype(int), np.array(Y_pred["Length"]).astype(int), np.array(Y_pred["Class"]), min_size, max_size, longNormal, classes)
         Y_pred = NMS(Y_pred, threshold, 0.1, dicc_size)
-        Y_true_nt = nt_TE(Y_true,np.ceil((max_size-min_size)/100).astype(int),threshold, dicc_size)
-        Y_pred_nt = nt_TE(Y_pred,np.ceil((max_size-min_size)/100).astype(int),threshold, dicc_size)
+        Y_true_nt = nt_TE_LTR(Y_true,np.ceil((max_size-min_size)/100).astype(int),threshold, dicc_size)
+        Y_pred_nt = nt_TE_LTR(Y_pred,np.ceil((max_size-min_size)/100).astype(int),threshold, dicc_size)
         TP_window = np.sum(Y_true_nt*Y_pred_nt)
         TP += TP_window
         FP += np.sum(Y_pred_nt)-TP_window
@@ -200,7 +191,7 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
         if Y_pred is None:
             continue
         Y_pred = NMS(Y_pred, threshold, 0.1, dicc_size)
-        Y_pred_nt = nt_TE(Y_pred,np.ceil((max_size-min_size)/100).astype(int), threshold, dicc_size)
+        Y_pred_nt = nt_TE_LTR(Y_pred,np.ceil((max_size-min_size)/100).astype(int), threshold, dicc_size)
         TP_window = 0
         TP += 0
         FP += np.sum(Y_pred_nt)-TP_window
@@ -215,7 +206,7 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
         Y_true = revert_gff(np.array(Y_ground["Start"]), np.array(Y_ground["Length(bp)"]), np.array(Y_ground["Domain"]), min_true, max_true, longNormal, classes)
         if Y_true is None:
             continue
-        Y_true_nt = nt_TE(Y_true,np.ceil((max_size-min_size)/100).astype(int), threshold, dicc_size)
+        Y_true_nt = nt_TE_LTR(Y_true,np.ceil((max_size-min_size)/100).astype(int), threshold, dicc_size)
         TP_window = 0
         TP += TP_window
         FP += 0
@@ -249,6 +240,7 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file):
         df_groundTrue.set_index('Chromosome', drop=True, inplace=True)
         renames_gff(df_groundTrue, original_domains)
         df_groundTrue = df_groundTrue.loc[
+            (df_groundTrue['Domain']=='LTR')|
             (df_groundTrue['Domain']=='GAG')|
             (df_groundTrue['Domain']=='RT')|
             (df_groundTrue['Domain']=='RNASEH')|
@@ -263,6 +255,7 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file):
     df_pred.columns = [i.replace(' ','').replace('|','') for i in list(df_pred.columns)]
     df_pred.set_index('id', drop=True, inplace=True)
     df_pred = df_pred.loc[
+        (df_groundTrue['Domain']=='LTR')|
         (df_pred['Class']=='GAG')|
         (df_pred['Class']=='RT')|
         (df_pred['Class']=='RNASEH')|

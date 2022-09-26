@@ -202,7 +202,6 @@ def main():
         print("The output of this pipeline was written at: ", outputfile)
         print("File Writting time elapsed: {}s".format(finish1))
 
-        """
         begin1 = time.time() 
         path_pred_anot = filename
         path_analysis = filename.replace('tab','out')
@@ -210,7 +209,6 @@ def main():
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
         print("Analysis Executed: time elapsed: {}s".format(finish1))
-        """
 
     finish = time.time() - begin
     print("Total time elapsed for pipeline execution: {}s ".format(finish))
