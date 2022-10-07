@@ -540,6 +540,10 @@ def label_LTR(X_test,y,threshold_presence):
           valor_inter_seq = 200
         else:
           valor_inter_seq = int((indices_start[k+1]-indices_end[k])/(50*3/2))
+        if n==0:
+          continue
+        if weights < 50:
+          continue
         n=min([200,valor_inter_seq,int((50000-indices_end[k])/50)])
         ind = indices_end[k]
         weights = X_test[i,:,ind:ind+(n)*50].reshape((4,n,1,50)).transpose((0,3,2,1))
