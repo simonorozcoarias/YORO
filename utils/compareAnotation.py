@@ -255,7 +255,7 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file):
     df_pred.columns = [i.replace(' ','').replace('|','') for i in list(df_pred.columns)]
     df_pred.set_index('id', drop=True, inplace=True)
     df_pred = df_pred.loc[
-        (df_groundTrue['Domain']=='LTR')|
+        (df_pred['Class']=='LTR')|
         (df_pred['Class']=='GAG')|
         (df_pred['Class']=='RT')|
         (df_pred['Class']=='RNASEH')|
@@ -281,3 +281,10 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file):
         file.write(f"\nMetricas para un threshold de {th}\n\n")
         Precision, Recall, Accuracy, F1 = metrics(th, df_groundTrue, df_pred, union_ids, pred_ids, ground_ids, longNormal, classes, dicc_size)
         file.write(f"Precision: {Precision} \nRecall: {Recall}\nAccuracy: {Accuracy}\nF1: {F1}\n")
+
+file_csv = 'YoloDNA/metrics/genomes_links.csv'
+path_anotation = 'dataset_intact_LTR-RT'
+idx = 84
+path_pred_anot = 'Capsella_bursa_pastoris.tab'
+path_analysis = 'Capsella_bursa_pastoris.tab'.replace('tab','out')
+analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis)
