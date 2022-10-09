@@ -546,7 +546,7 @@ def label_LTR(X_test,y,threshold_presence):
         ind = indices_end[k]
         weights = X_test[i,:,ind:ind+(n)*50].reshape((4,n,1,50)).transpose((0,3,2,1))
         window = indices_start[k]-comienzo
-        if weights < 50:
+        if window < 50:
           continue
         tensor, tensor_full = BEE(weights,window,n,X_test[i:i+1,:,comienzo:indices_start[k]].reshape((1,4,window,1)))
         tensor = tensor[0,0,:,0]
