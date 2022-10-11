@@ -205,7 +205,7 @@ def main():
         begin1 = time.time() 
         path_pred_anot = filename
         path_analysis = filename.replace('tab','out')
-        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis)
+        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence)
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
         print("Analysis Executed: time elapsed: {}s".format(finish1))
