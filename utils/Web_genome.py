@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from optparse import OptionParser
+from optparse import OptionParser 
 import random 
 import numpy as np 
 import pandas as pd 
@@ -13,25 +13,6 @@ import gdown
 from Bio import SeqIO
 from tqdm import tqdm
 import sys
-
-def argumentParser():
-    usage = "Usage: Web_genome.py -c file.csv -[options] [Value]"
-    parser = OptionParser(usage=usage)
-
-    parser.add_option('-c', '--file.csv', dest='fileCSV', help='file csv with informatio about genomes',type=str, default=None)   
-    parser.add_option('-T', '--timeout', dest='timeout', help='timeout for connection',type=int, default=None)   
-    parser.add_option('-d', '--directory', dest='dire', help='Output directory',type=str, default=".")
-    parser.add_option('-s', '--samples', dest='samples', help='number of samples to be downloaded randomly',type=int, default=-1)
-    parser.add_option('-i', '--index', dest='index', help='specific genome to be downloaded from the database using index (1-226)',type=int, default=1)
-    (options,_) = parser.parse_args()
-    return options
-
-options = argumentParser()
-file_csv = options.fileCSV
-timeout = options.timeout
-path_save = options.dire
-samples = options.samples
-idx = options.index
 
 def find(name, path):
     for root, dirs, files in os.walk(path, topdown=True):
@@ -137,27 +118,29 @@ def download(df_genome,path_save,sample,timeout,index):
                     print('Fallo la descarga de ',names[i])
     return None
 
-df_genome = pd.read_csv(file_csv, sep=';')
-links_unique = unique_webpage(df_genome, count=False)
-names = download(df_genome,path_save,sample=samples,timeout=timeout,index=idx)
-path_query = find(names[0].replace('fasta','txt'), 'metrics/dataset_intact_LTR-RT')
-
-#Validación de si el archivo descargado coincide con el de anotación
-if names is not None:
-    if path_query is not None:
-        df_anot = pd.read_csv(path_query, sep='\t')
-        df_anot.columns = [i.replace(' ','') for i in list(df_anot.columns)]
-        id_anot = df_anot['Chromosome'].unique().tolist()
-        seq = list(SeqIO.parse(path_save+'/'+names[0], 'fasta'))
-        id_fasta = [i.id for i in seq]
-        #Se comprueba que al menos la ventiaba parte de los indices del archivo de anotación correspondan al archio fasta
-        check = random.sample(id_anot, int(len(id_anot)/5))
-        for j in check:
-            if j not in id_fasta:
-                f = open('ERROR.txt','w').write('TRUE')
-                sys.exit("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
-        f = open('ERROR.txt','w').write('FALSE')
-    else:
-        print("No encontro el archivo de anotación")
-        f=open('ERROR.txt','w').write('TRUE')
+def download2(file_csv, timeout, path_save, idx, path_anotation, samples=-1):
+    df_genome = pd.read_csv(file_csv, sep=';')
+    links_unique = unique_webpage(df_genome, count=False)
+    names = download(df_genome,path_save,sample=samples,timeout=timeout,index=idx)
+    path_query = find(names[0].replace('fasta','txt'), path_anotation)
+    
+    #Validación de si el archivo descargado coincide con el de anotación
+    if names is not None:
+        if path_query is not None:
+            df_anot = pd.read_csv(path_query, sep='\t')
+            df_anot.columns = [i.replace(' ','') for i in list(df_anot.columns)]
+            id_anot = df_anot['Chromosome'].unique().tolist()
+            seq = list(SeqIO.parse(path_save+'/'+names[0], 'fasta'))
+            id_fasta = [i.id for i in seq]
+            #Se comprueba que al menos la ventiaba parte de los indices del archivo de anotación correspondan al archio fasta
+            check = random.sample(id_anot, int(len(id_anot)/5))
+            for j in check:
+                if j not in id_fasta:
+                    #f = open('ERROR.txt','w').write('TRUE')
+                    sys.exit("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
+            f = open('ERROR.txt','w').write('FALSE')
+        else:
+            print("No encontro el archivo de anotación")
+            f=open('ERROR.txt','w').write('TRUE')
+    return names[0]
 

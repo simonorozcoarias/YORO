@@ -26,6 +26,7 @@ from utils.deepLutils import NMS, label_LTR
 from utils.resultsWriting import tabGeneration
 
 from utils.compareAnotation import analysis
+from utils.Web_genome import download2
 
 def argumentParser():
 
@@ -52,8 +53,10 @@ def argumentParser():
     #parser.add_argument('-i', '--iou',dest='iou',help='Threshold for IOU filter',type=float, default=0.9)
     parser.add_option('-n', '--nms',dest='nms',help='Threshold for NMS filter',type=float, default=0.1)
     parser.add_option('-w', '--window',dest='win',help='Window size for object detection',type=int,default=50000)
-    parser.add_option('-m', '--modelpath',dest='model',help='path to models weights',type=str,default=None)    
-    parser.add_option('-x', '--index',dest='index',help='index of name genome (1-226)',type=int,default=None)    
+    parser.add_option('-m', '--modelpath',dest='model',help='Path to models weights',type=str,default=None)    
+    parser.add_option('-x', '--index',dest='index',help='Index of name genome (1-226)',type=int,default=None)    
+    parser.add_option('-T', '--test',dest='inpactorDB',help='Select a test annotation file. The columns of the file match these names <id_secuenceStartLengthDomain>.',type=str,default=None) 
+    parser.add_option('-d','--download',dest='download',help='link of genome',type=int,default=None)
     (options,_) = parser.parse_args()
     return options
     
@@ -75,10 +78,20 @@ def main():
     file_csv = 'metrics/genomes_links.csv'
     path_anotation = 'metrics/dataset_intact_LTR-RT'
     idx = options.index
+    inpactorTest = options.inpactorDB
+    download = options.download
+    timeout = 500
 
-    if file is None:
-        print("Please insert at least a file in FASTA format")
-        sys.exit(1)
+    if download is None:
+        if file is None:
+            print("Please insert at least a file in FASTA format")
+            sys.exit(1)
+    else:
+        path_save = '.'
+        name = download2(file_csv, timeout, path_save, idx, path_anotation)
+        filename = name
+
+
     
     if filename is None:
         print("No filename provided, using 'output.tab' as output filename.\n if this file exists, it will be overwrited")
@@ -205,7 +218,7 @@ def main():
         begin1 = time.time() 
         path_pred_anot = filename
         path_analysis = filename.replace('tab','out')
-        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence)
+        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest)
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
         print("Analysis Executed: time elapsed: {}s".format(finish1))
