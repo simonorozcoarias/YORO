@@ -1,0 +1,16 @@
+#Correr genomas de internet
+
+Para correr con esta opción se deben proporcionar los siguientes parámetros especiales
+    -i indice del genoma que se desea analizar de los presentes en el excel que se encuentra en la 
+        carpeta de metrics
+    -d poner True para que el pipeline realice la descarga autómatica del genoma
+    -f no se utiliza 
+
+#Correr genoma de prueba
+
+Para correr con esta opción se deben proporcionar los siguientes parámetros especiales
+
+    -T ruta del archivo de anotación 
+    -f ruta del genoma de prueba
+    -i no se utiliza
+    -d no se utiliza
