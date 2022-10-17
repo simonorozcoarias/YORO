@@ -1,16 +1,34 @@
-#Correr genomas de internet
+################################################################################################
+#                                  Correr genomas de internet
+################################################################################################
 
 Para correr con esta opción se deben proporcionar los siguientes parámetros especiales
-    -i indice del genoma que se desea analizar de los presentes en el excel que se encuentra en la 
+    -x indice del genoma que se desea analizar de los presentes en el excel que se encuentra en la 
         carpeta de metrics
-    -d poner True para que el pipeline realice la descarga autómatica del genoma
+    --download poner True para que el pipeline realice la descarga autómatica del genoma
     -f no se utiliza 
 
-#Correr genoma de prueba
+Los demás parámetros son opcionales como número de núcleos a utilizar, directorio de trabajo, etc.
+
+EJEMPLO:
+    python pipelineDomain.py -o filename.out -t 0.5 -x 2 --download True 
+
+################################################################################################
+#                                      Correr genoma de prueba
+################################################################################################
 
 Para correr con esta opción se deben proporcionar los siguientes parámetros especiales
 
     -T ruta del archivo de anotación 
     -f ruta del genoma de prueba
-    -i no se utiliza
-    -d no se utiliza
+    -x no se utiliza
+    --download no se utiliza
+    
+Los demás parámetros son opcionales como número de núcleos a utilizar, directorio de trabajo, etc.
+
+EJEMPLO:
+    python pipelineDomain.py -f path/filename.fasta -o path/filename.out -t 0.5 -T path/file.gff
+
+################################################################################################
+
+Para información relacionada con el formato, utilizar la opción python pipelineDomain.py --help

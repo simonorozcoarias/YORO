@@ -56,7 +56,7 @@ def argumentParser():
     parser.add_option('-m', '--modelpath',dest='model',help='Path to models weights',type=str,default=None)    
     parser.add_option('-x', '--index',dest='index',help='Index of name genome (1-226)',type=int,default=None)    
     parser.add_option('-T', '--test',dest='inpactorDB',help='Select a test annotation file. The columns of the file match these names <id_secuenceStartLengthDomain>.',type=str,default=None) 
-    parser.add_option('-d','--download',dest='download',help='link of genome',type=int,default=None)
+    parser.add_option('-D','--download',dest='download',help='download genome',type=int,default=False)
     (options,_) = parser.parse_args()
     return options
     
@@ -82,7 +82,7 @@ def main():
     download = options.download
     timeout = 500
 
-    if download is None:
+    if download == False:
         if file is None:
             print("Please insert at least a file in FASTA format")
             sys.exit(1)
