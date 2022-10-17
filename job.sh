@@ -19,7 +19,7 @@ unset PYTHONPATH
 conda activate YoloDNA
 
 #INGRESE LOS INDICES DE LAS SECUENCIAS QUE DESEA EJECUTAR
-for i in 188
+for i in {1..259}
 do
     python3 pipelineDomain.py -t 0.5 -x $i
     rm -f *.fasta

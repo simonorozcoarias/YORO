@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from locale import D_FMT
 from optparse import OptionParser 
 import random 
 import numpy as np 
@@ -40,10 +41,19 @@ def unique_webpage(df_genome, count=False):
             print(j,': ',df_genome["Data sources"].loc[df_genome["Data sources"].str.contains(j, case=False)].count())
     return pages
 
-def size_genome(names):
+def size_genome(names, file_csv, idx):
     command = f'`du -sh "{names[0]}" | cut -f1`'
     out = subprocess.run(command, shell=True, stdout=subprocess.PIPE, encoding='utf-8')
-    print('[INFO] The genome size is ',out.stdout)
+    df_genome = pd.read_csv(file_csv, sep=';')
+    df_genome_copy = df_genome.loc[idx-1].copy
+    df_genome_copy['genome_size'] = out.stdout.replace('\n','')
+    if os.path.isfile('genomes_links_final.csv'):
+        df2 = pd.read_csv('genomes_links_final.csv', sep=';')
+        df2.append(df_genome_copy)
+        df2.to_csv('genomes_links_final.csv', sep=';')
+    else:
+        df_genome.to_csv('genomes_links_final.csv', sep='\t')
+    print('[INFO] The genome size is ',out.stdout.replace('\n',''))
 
 
 def download(df_genome,path_save,sample,timeout,index):
@@ -123,7 +133,6 @@ def download(df_genome,path_save,sample,timeout,index):
                     return names
                 except:
                     print('Fallo la descarga de ',names[i])
-    size_genome(names)
     return None
 
 def download2(file_csv, timeout, path_save, idx, path_anotation, samples=-1):
@@ -150,5 +159,7 @@ def download2(file_csv, timeout, path_save, idx, path_anotation, samples=-1):
         else:
             print('La secuencia ',names[0],' no con indice',idx,' coincide con el archivo de anotación')
             sys.exit(1)
+    
+    size_genome(names, file_csv, idx)
     return names[0]
 
