@@ -13,6 +13,7 @@ import gdown
 from Bio import SeqIO
 from tqdm import tqdm
 import sys
+import subprocess
 
 def find(name, path):
     for root, dirs, files in os.walk(path, topdown=True):
@@ -38,6 +39,12 @@ def unique_webpage(df_genome, count=False):
         for j in pages:
             print(j,': ',df_genome["Data sources"].loc[df_genome["Data sources"].str.contains(j, case=False)].count())
     return pages
+
+def size_genome(names):
+    command = f'`du -sh "{names[0]}" | cut -f1`'
+    out = subprocess.run(command, shell=True, stdout=subprocess.PIPE, encoding='utf-8')
+    print('[INFO] The genome size is ',out.stdout)
+
 
 def download(df_genome,path_save,sample,timeout,index):
     if sample != -1:
@@ -116,6 +123,7 @@ def download(df_genome,path_save,sample,timeout,index):
                     return names
                 except:
                     print('Fallo la descarga de ',names[i])
+    size_genome(names)
     return None
 
 def download2(file_csv, timeout, path_save, idx, path_anotation, samples=-1):
@@ -136,11 +144,11 @@ def download2(file_csv, timeout, path_save, idx, path_anotation, samples=-1):
             check = random.sample(id_anot, int(len(id_anot)/5))
             for j in check:
                 if j not in id_fasta:
-                    #f = open('ERROR.txt','w').write('TRUE')
+                    print('La secuencia ',names[0],' con indice',idx,' no coincide con el archivo de anotación')
                     sys.exit("ERROR: los id entre el archivo de anotación y el genoma no son iguales")
-            f = open('ERROR.txt','w').write('FALSE')
+            print('La secuencia ',names[0],' con indice',idx,' coincide con el archivo de anotación')
         else:
-            print("No encontro el archivo de anotación")
-            f=open('ERROR.txt','w').write('TRUE')
+            print('La secuencia ',names[0],' no con indice',idx,' coincide con el archivo de anotación')
+            sys.exit(1)
     return names[0]
 

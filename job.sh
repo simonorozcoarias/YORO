@@ -21,28 +21,6 @@ conda activate YoloDNA
 #INGRESE LOS INDICES DE LAS SECUENCIAS QUE DESEA EJECUTAR
 for i in 188
 do
-    conda deactivate
-    conda activate YoloDNA
-
-    python3 Web_genome.py -c "metrics/genomes_links.csv" -T 500 -i $i
-    filename=`ls *.fasta`
-    flag=,`cut -f1 ERROR.txt`
-    if [ "$flag" == "TRUE" ]
-    then
-        rm -f ERROR.txt
-        echo "La secuencia $filename fallo"
-        rm *.fasta
-        rm *.zip
-    else
-        chmod +777 *.fasta
-        rm -f ERROR.txt
-        size=`du -sh "$filename" | cut -f1`
-        echo "El tamano del genoma $filename es: $size"
-        conda deactivate
-        conda activate YoloDNA2
-
-        echo "Ejecutando el genoma ${filename} secuencia $i"
-        python3 pipelineDomain.py -f $filename -o ${filename/fasta/tab} -t 0.5 -x $i
-        rm -f $filename
-    fi
+    python3 pipelineDomain.py -t 0.5 -x $i
+    rm -f *.fasta
 done
