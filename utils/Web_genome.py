@@ -40,12 +40,6 @@ def unique_webpage(df_genome, count=False):
             print(j,': ',df_genome["Data sources"].loc[df_genome["Data sources"].str.contains(j, case=False)].count())
     return pages
 
-def size_genome(names):
-    command = f'`du -sh "{names[0]}" | cut -f1`'
-    out = subprocess.run(command, shell=True, stdout=subprocess.PIPE, encoding='utf-8')
-    print('[INFO] The genome size is ',out.stdout)
-
-
 def download(df_genome,path_save,sample,timeout,index):
     if sample != -1:
         sample = random.sample(range(301),sample)
@@ -69,6 +63,10 @@ def download(df_genome,path_save,sample,timeout,index):
                     f.write(response.content)
                 with ZipFile(path_save+'/'+name_file+'.zip','r') as zip:
                     zip.extractall(path_save)
+                try:
+                    os.remove(path_save+'/'+name_file+'.zip')
+                except:
+                    pass
                 genome = find('.gz',path_save)
                 if genome is not None:
                     with gzip.open(genome,'rb') as f_1:
@@ -123,7 +121,6 @@ def download(df_genome,path_save,sample,timeout,index):
                     return names
                 except:
                     print('Fallo la descarga de ',names[i])
-    size_genome(names)
     return None
 
 def download2(file_csv, timeout, path_save, idx, path_anotation, samples=-1):
