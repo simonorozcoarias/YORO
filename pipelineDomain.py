@@ -217,7 +217,7 @@ def main():
         
         begin1 = time.time() 
         path_pred_anot = filename
-        path_analysis = filename.replace('tab','out')
+        path_analysis = filename.replace('tab','metrics')
         analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest)
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
