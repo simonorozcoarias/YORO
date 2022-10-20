@@ -271,7 +271,7 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inp
     original_domains = {'RH':'RNASEH','aRH':'RNASEH','RH/aRH':'RNASEH','PROT':'AP','intact_5ltr':'LTR','intact_3ltr':'LTR'}
     th =  threshold #threshold de presencia
 
-    if idx == None:
+    if idx != None:
         #Se lee el archivo csv con los genomas
         df_genome = pd.read_csv(file_csv, sep=';')
 
