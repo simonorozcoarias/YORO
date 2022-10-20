@@ -299,7 +299,7 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inp
             sys.exit(1)
     else: 
         df_groundTrue = pd.read_csv(inpactorTest, sep='\t')
-        df_groundTrue.columns = [i.replace(' ','') for i in list(df_groundTrue.columns)]
+        df_groundTrue.columns = [i.replace(' ','').replace('|','') for i in list(df_groundTrue.columns)]
         df_groundTrue.set_index('id_secuence', drop=True, inplace=True)
         df_groundTrue = df_groundTrue.loc[
                 (df_groundTrue['Domain']=='LTR')|
