@@ -89,7 +89,8 @@ def main():
     else:
         path_save = '.'
         name = download2(file_csv, timeout, path_save, idx, path_anotation)
-        filename = name
+        filename = name.replace('.fasta','.tab')
+        file = name
 
 
     
