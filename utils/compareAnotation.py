@@ -8,6 +8,8 @@ import sys
 from Bio import SeqIO
 from tensorflow.keras import backend as K 
 import time
+import subprocess
+import matplotlib.pyplot as plt 
 
 def IOU(box1,box2,size1,size2):
 
@@ -192,7 +194,52 @@ def renames_gff(df, original_domains):
     for i in original_domains.keys():
         df.replace(i,original_domains[i],inplace=True)
 
-def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, longNormal, classes, dicc_size):
+def get_index(Y_true, Y_pred, threshold, dicc_size, file_index, id):
+    Y1_index = list(np.where(Y_true[:,0]==1)[0])
+    Y2_index = list(np.where(Y_pred[:,0]==1)[0])
+    dom_union1 = []
+    dom_union2 = []
+    Y_pred_out = np.zeros(Y_pred.shape)
+    for i in Y1_index:
+        flag=False
+        for k,j in enumerate(Y2_index):
+            box1=[Y_true[i,1], Y_true[i,2],i]
+            box2=[Y_pred[j,1],Y_pred[j,2],j]
+            dom1=np.argmax(Y_true[i,3:])
+            dom2=np.argmax(Y_pred[j,3:])
+            size1=dicc_size[dom1]
+            size2=dicc_size[dom2]
+            iou = IOU(box1,box2,size1,size2)
+            if iou>=threshold:
+                dom_union1.append(i)
+                dom_union2.append(j)
+                Y_pred_out[j,:] = Y_pred[j,:]
+                pos = k
+                flag = True
+                break
+        if flag:
+            del Y2_index[pos]
+        if not Y2_index:
+            break
+    dom_unique = np.array(Y2_index)
+    file_index.write(f"index para id: {id}\n {str(dom_unique)}\n")
+    print("Tamaño de unicos",dom_unique)
+    return dom_unique, dom_union1, dom_union2, Y_pred_out
+
+def get_fasta(Y, ids, seq, file, id, classes, k, dicc_size):
+    for i in ids:
+        start = int((i+1+Y[i,1])*100)
+        size= dicc_size[np.argmax(Y[i,3:])]
+        dom = classes[np.argmax(Y[i,3:])+3]
+        end = int(start+Y[i,2]*size)
+        #print(seq_final)
+        #print(seq[start:end])
+        k += 1
+        file.write(f">domain{k}={dom}_seqid_{id}_start_{start}_end_{end}\n")
+        file.write(str(seq[start:end])+"\n")
+    return k
+
+def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, longNormal, classes, dicc_size,  dict_seq):
     """
     Esta función calcula las métricas de precisión, recall, f1 y exactitud para los archivos 
     gff de anotación y predicción.
@@ -207,8 +254,12 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
         classes: Diccionario con las classes de los dominios.
         dicc_size: Diccionario con las longitudes de los dominos. 
     """
+    file_unique = open('FP.fasta','w')
+    file_index = open('index_FP.txt','w')
+    k1 = 0; k2 = 0; k3 = 0 
     TP = 0; FP = 0; FN = 0; TN=0
-    for id in union_ids:
+    for id in union_ids[:1]:
+        print("Bien1")
         Y_ground = df_groundT.loc[id].copy()
         Y_pred = df_pred.loc[id].copy()
         max_true, max_pred = Y_ground['Length(bp)'].max()+Y_ground['Start'].max(), Y_pred['Length'].max()+Y_pred['Start'].max()
@@ -220,14 +271,43 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
             continue
         
         Y_pred = revert_gff(np.array(Y_pred["Start"]), np.array(Y_pred["Length"]), np.array(Y_pred["Class"]), max_size, longNormal, classes)
+        dom_unique, dom_union1, dom_union2, Y2_pred_out = get_index(Y_true, Y_pred, 0.6, dicc_size, file_index, id)
+        classes2 = {3:"RT",4:"GAG",5:"ENV",6:"INT",7:"AP",8:"RNASEH",9:"LTR"}
+        k1 = get_fasta(Y_pred, dom_unique, dict_seq[id].seq, file_unique,id,classes2, k1,dicc_size)
         Y_true_nt = nt_TE_LTR(Y_true, max_size, threshold, dicc_size)
-        Y_pred_nt = nt_TE_LTR(Y_pred, max_size, threshold, dicc_size)
+        Y_pred_nt = nt_TE_LTR(Y2_pred_out, max_size, threshold, dicc_size)
+        ind = np.arange(0,Y_true.shape[0])
+        #plt.figure(figsize=(10,7))
+        #plt.plot(ind, Y_true[:,0])
+        #plt.save("Y_true.png")
+        #plt.figure(figsize=(10,7))
+        #plt.plot(ind, Y2_pred_out[:,0])
+        #plt.save("Y_pred.png")
+
         TP_window = np.sum(Y_true_nt*Y_pred_nt)
+        FP_window = np.sum(Y_pred_nt)-TP_window
+        FN_window = np.sum(Y_true_nt)-TP_window
         TP += TP_window
-        FP += np.sum(Y_pred_nt)-TP_window
-        FN += np.sum(Y_true_nt)-TP_window
-        TN += Y_true_nt.shape[0]-TP_window-(np.sum(Y_pred_nt)-TP_window)-(np.sum(Y_true_nt)-TP_window)
-    
+        FP += FP_window
+        FN += FN_window
+        TN += Y_true_nt.shape[0]
+    file_unique.close()
+    #file_union1.close()
+    #file_union2.close()
+    #subprocess.run("diamond blastx -k 1 -v --ultra-sensitive -f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp scovhsp -q FP.fasta -d /shared/home/sorozcoarias/coffea_genomes/Simon/YOLO/blastx_REXDB_GYPSYDB/GYREX.dmnd -p 42 -o Blast_FP.m6", shell=True, check=True) #-e 0.00001 --id 80 --query-cover 80
+    #df = pd.read_csv("Blast_FP.m6", sep="\t", names=["qseqid","sseqid","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore","qcovhsp","scovhsp"])
+    #TP += df.length.sum()
+    #FP += sum(abs(df.qstart-df.qend))-df.length.sum()
+    #TN -= TP + FP + FN
+    #file = list(SeqIO.parse("FP.fasta", format="fasta"))
+    """
+    length = []
+    for i in file:
+        if df.qseqid.str.contains(str(i.id), regex=False, case=False).any():
+            length.append(i)
+    FP += sum(length)
+    """
+    """
     for id in pred_ids:
         Y_pred = df_pred.loc[id].copy()
         max_pred = Y_pred['Length'].max()+Y_pred['Start'].max()
@@ -257,14 +337,15 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
         FP += 0
         FN += np.sum(Y_true_nt)-TP_window
         TN += Y_true_nt.shape[0]-TP_window-0-(np.sum(Y_true_nt)-TP_window)
-
+    """
     Precision = TP/(TP+FP+K.epsilon())
     Recall = TP/(TP+FN+K.epsilon())
-    Accuracy = (TP + TN)/ (TP + FN + TN + FP+K.epsilon())
+    #Accuracy = (TP + TN)/ (TP + FN + TN + FP+K.epsilon())
+    Accuracy = 0
     F1 = 2* Precision*Recall/(Precision + Recall+K.epsilon())
     return Precision, Recall, Accuracy, F1
 
-def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inpactorTest):
+def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inpactorTest, genome):
     dicc_size={0:1000,1:3000,2:2000,3:2000,4:1000,5:1000,6:10000}
     classes = {"RT":3,"GAG":4,"ENV":5,"INT":6,"AP":7,"RNASEH":8,"LTR":9}
     longNormal = {3:1000,4:3000,5:2000,6:2000,7:1000,8:1000,9:10000}
@@ -335,5 +416,23 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inp
     file.write(f'Numero de ids unicos para el archivo de ground True: {len(ground_ids)}\n')
     file.write(f'Numero de ids que se comparten en los dos archivos: {len(union_ids)}\n\n')
     #file.write(f"\nMetricas para un threshold de {th}\n\n")
-    Precision, Recall, Accuracy, F1 = metrics(th, df_groundTrue, df_pred, union_ids, pred_ids, ground_ids, longNormal, classes, dicc_size)
+    dict_seq = SeqIO.to_dict(SeqIO.parse(genome, 'fasta'))
+    Precision, Recall, Accuracy, F1 = metrics(0.8, df_groundTrue, df_pred, union_ids, pred_ids, ground_ids, longNormal, classes, dicc_size, dict_seq)
     file.write(f"Precision: {Precision} \nRecall: {Recall}\nAccuracy: {Accuracy}\nF1: {F1}\n")
+
+if __name__ == '__main__':
+    path = '/mnt/c/Users/estiv/Documents/Joven/Genomes/Prueba_FP_blast'
+    filename = path+'/Oryza_sativa_ssp._Indica.tab'
+    file_csv = path+'/../YoloDNA/metrics/genomes_links.csv'
+    path_anotation = path+'/../YoloDNA/metrics/dataset_intact_LTR-RT'
+    genome = path+'/R498_Chr.fasta'
+    idx = 188
+    threshold_presence = 0.85
+    inpactorTest = None
+    begin1 = time.time() 
+    path_pred_anot = filename
+    path_analysis = "metrics.txt"
+    analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest, genome=genome)
+    finish1 = time.time() - begin1
+    print("The analysis file was writeen at: ",path_analysis)
+    print("Analysis Executed: time elapsed: {}s".format(finish1))

@@ -27,6 +27,7 @@ from utils.resultsWriting import tabGeneration
 
 from utils.compareAnotation import analysis
 from utils.Web_genome import download2
+from utils.complete_gff import main
 
 def argumentParser():
 
@@ -57,6 +58,7 @@ def argumentParser():
     parser.add_option('-x', '--index',dest='index',help='Index of name genome (1-226)',type=int,default=None)    
     parser.add_option('-T', '--test',dest='inpactorDB',help='Select a test annotation file. The columns of the file match these names <id_secuence\tStart\tLength\tDomain>.',type=str,default=None) 
     parser.add_option('-D','--download',dest='download',help='download genome',type=str,default="False")
+    parser.add_option('--complete_gff',dest='completeGFF',help='complete annotation gff with blast and hmmmscan',type=str,default="False")
     (options,_) = parser.parse_args()
     return options
     
@@ -81,6 +83,7 @@ def main():
     inpactorTest = options.inpactorDB
     download = options.download
     timeout = 500
+    complete_gff = options.completeGFF
 
     if download == "False":
         if file is None:
@@ -103,7 +106,7 @@ def main():
         if not os.path.exists(outputDir):
             print("This path doesn't exists, please provide a valid path.")
             sys.exit(1)
-        elif outputDir[0] != '/':
+        elif outputDir[-1] != '/':
             outputDir = outputDir+'/'
 
 
@@ -215,13 +218,24 @@ def main():
         print("The output of this pipeline was written at: ", outputfile)
         print("File Writting time elapsed: {}s".format(finish1))
         
-        begin1 = time.time() 
-        path_pred_anot = filename
-        path_analysis = filename.replace('tab','metrics')
-        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest)
-        finish1 = time.time() - begin1
-        print("The analysis file was writeen at: ",path_analysis)
-        print("Analysis Executed: time elapsed: {}s".format(finish1))
+        if complete_gff=="True":
+            begin1 = time.time() 
+            if not os.path.exists(outputDir+"complete_gff"):
+                os.mkdir(outputDir+"complete_gff")
+            path_pred_anot = filename
+            path_complete_gff = outputDir+"complete_gff"
+            analysis(file_csv, path_anotation, idx, path_pred_anot, path_complete_gff)
+            finish1 = time.time() - begin1
+            print("The analysis file was writeen at: ",path_analysis)
+            print("Analysis Executed: time elapsed: {}s".format(finish1))
+        else:
+            begin1 = time.time() 
+            path_pred_anot = filename
+            path_analysis = filename.replace('tab','metrics')
+            analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest)
+            finish1 = time.time() - begin1
+            print("The analysis file was writeen at: ",path_analysis)
+            print("Analysis Executed: time elapsed: {}s".format(finish1))
 
     finish = time.time() - begin
     print("Total time elapsed for pipeline execution: {}s ".format(finish))

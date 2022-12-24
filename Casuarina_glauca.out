@@ -1,0 +1,12 @@
+Analysis for the specie of Casuarina glauca
+
+Numero de ids unicos para el archivo de prediccion: 39492
+Numero de ids unicos para el archivo de ground True: 0
+Numero de ids que se comparten en los dos archivos: 309
+
+Metricas para un threshold de 0.5
+
+Precision: 0.15987343400315066 
+Recall: 0.6444863771196205
+Accuracy: 0.9966838206801362
+F1: 0.25619439470706457
