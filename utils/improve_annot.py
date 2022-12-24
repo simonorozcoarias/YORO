@@ -39,7 +39,7 @@ def process(genome, df, chr):
     ltr = df.LTR_ID.loc[df.Chromosome==chr].unique()
     start = []
     end = []
-    for i in ltr:
+    for i in ltr[:50]:
         division = i.split("_")
         #print(division)
         start.append(int(division[-2]))
@@ -71,7 +71,7 @@ def main(genome, path_save, file_csv, idx, pIden, evalue, sensitive):
     chrs = df_groundTrue.Chromosome.unique()
 
     jobs = []    
-    for chr in range(len(chrs)):
+    for chr in range(1) #len(chrs)):
         print("Empezando la cpu ",chr+1)
         pr = Process(target=process, args=(fasta, df_groundTrue, chrs[chr]))
         jobs.append(pr)
@@ -88,7 +88,7 @@ def main(genome, path_save, file_csv, idx, pIden, evalue, sensitive):
         os.remove(i)
     masked_fasta.close()
 
-    command = f"diamond -p 42 -k 1 -F 15 --range-culling -v --id {pIden} --evallue {evalue} {sensitive} -q {path_save}/masked_genome.fasta -o masked_genome.m6 -f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp scovhsp -d /shared/home/sorozcoarias/coffea_genomes/Simon/YOLO/blastx_REXDB_GYPSYDB/GYREX.dmnd"
+    command = f"diamond blastx -p 42 -k 1 -F 15 --range-culling -v --id {pIden} --evalue {evalue} {sensitive} -q {path_save}/masked_genome.fasta -o masked_genome.m6 -f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp scovhsp -d /shared/home/sorozcoarias/coffea_genomes/Simon/YOLO/blastx_REXDB_GYPSYDB/GYREX.dmnd"
     subprocess.run(command, shell=True, check=True)
     df = pd.read_csv("masked_genome.m6", sep="\t", names=["qseqid","sseqid","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore","qcovhsp","scovhsp"])
     for i in range(df.shape[0]):
