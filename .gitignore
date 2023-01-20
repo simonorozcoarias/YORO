@@ -5,3 +5,6 @@ metrics/Out_4.tab
 metrics/dataset_intact_LTR-RT.tar.gz
 metrics/dataset_intact_LTR-RT
 metrics/sample30.csv
+utils/__pycache__/*
+Data/
+utils/extra_functions.py
