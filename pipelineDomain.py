@@ -143,7 +143,10 @@ def main():
             print("An exception ocurred, the weigth file does not exist, please set a correct filenaname!")
             sys.exit(1)
     else:
-        modelFilepath = 'models/AAYOLO_domain_v17.hdf5'
+        #modelFilepath = 'models/AAYOLO_domain_v17.hdf5'
+        #modelFilepath = 'models/AAqqYOLO_domainqqV20.hdf5'
+        #modelFilepath = 'models/AAqqYOLOqqdomainqqV22.hdf5'
+        modelFilepath = 'models/AAqqYOLOqqdomainqqV21.hdf5'
 
     # Cycles for detection
     slide_win = int(total_win_len / cycles)
@@ -191,6 +194,7 @@ def main():
         finish1 = time.time() - begin1
         print("NN Architecture loaded: time elapsed: {}s".format(finish1))
 
+        '''
         print("Detecting Elements with DeepLearning")
         begin1 = time.time()
         Yhat_test = model.predict(splitted_genome[:,0:4,:])
@@ -201,15 +205,19 @@ def main():
         begin1 = time.time()
         Yhat_pred = NMS(Yhat_test, threshold_presence, threshold_NMS)
         finish1 = time.time() - begin1
+        np.save(f"Yhat_pred{file.replace('/','')}.npy",Yhat_pred)
         print("Non-Max Supression exectuded: time elapsed {}s".format(finish1))
+        '''
         
-        begin1 = time.time()
-        label_add = label_LTR(splitted_genome[:,0:4,:],Yhat_pred,threshold_presence)
-        Yhat_pred[:,:,:,0:3]=Yhat_pred[:,:,:,0:3]+label_add[:,:,:,0:3]
-        Yhat_pred = np.concatenate((Yhat_pred,label_add[:,:,:,0:1]),axis=3)
-        finish1 = time.time() - begin1
-        print("LTR detection executed: time elapsed {}s".format(finish1))
+        #begin1 = time.time()
+        #label_add = label_LTR(splitted_genome[:,0:4,:],Yhat_pred,threshold_presence)
+        #Yhat_pred[:,:,:,0:3]=Yhat_pred[:,:,:,0:3]+label_add[:,:,:,0:3]
+        #Yhat_pred = np.concatenate((Yhat_pred,label_add[:,:,:,0:1]),axis=3)
+        #finish1 = time.time() - begin1
+        #print("LTR detection executed: time elapsed {}s".format(finish1))
 
+        
+        Yhat_pred = np.load(f"Yhat_pred{file.replace('/','')}.npy")
         begin1 = time.time()
         outputfile = tabGeneration(filename,Yhat_pred,list_ids,total_win_len,threshold_presence)
         finish1 = time.time() - begin1
@@ -219,7 +227,7 @@ def main():
         begin1 = time.time() 
         path_pred_anot = filename
         path_analysis = filename.replace('tab','metrics')
-        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest)
+        analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest, file_fasta=file)
         finish1 = time.time() - begin1
         print("The analysis file was writeen at: ",path_analysis)
         print("Analysis Executed: time elapsed: {}s".format(finish1))

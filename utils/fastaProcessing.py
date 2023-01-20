@@ -7,28 +7,6 @@ import multiprocessing
 from utils.onehotProcessing import fasta2one_hot
 
 
-def get_final_dataset_size(file, total_win_len, slide):
-    """
-        These functions are used to calcute the size of the data to be analyze by the software
-    """
-
-    seqfile = [x for x in SeqIO.parse(file, 'fasta')]
-    list_ids_splitted = []
-    list_seq_splitter = []
-    for i in range(len(seqfile)):
-        for j in range(slide, len(str(seqfile[i].seq)), total_win_len):
-            if "#" in str(seqfile[i].id):
-                print("FATAL ERROR: Sequence ID (" + str(seqfile[i].id) + ") must no contain character '#', please remove "
-                                     "all of these and re-run the script")
-                sys.exit(0)
-            initial_pos = j
-            end_pos = initial_pos + total_win_len
-            if end_pos > len(str(seqfile[i].seq)):
-                end_pos = len(str(seqfile[i].seq))
-            list_ids_splitted.append(str(seqfile[i].id) + "#" + str(initial_pos) + "#" + str(end_pos))
-            list_seq_splitter.append(str(seqfile[i].seq)[initial_pos:end_pos])
-    return list_ids_splitted, list_seq_splitter
-
 def check_nucleotides_master(list_seqs, threads):
     """
         These functions are used to check if the input sequences contain non-nucleotic characters (others than A, C, T, G, N)

@@ -127,6 +127,8 @@ def download2(file_csv, timeout, path_save, idx, path_anotation, samples=-1):
     df_genome = pd.read_csv(file_csv, sep=';')
     links_unique = unique_webpage(df_genome, count=False)
     names = download(df_genome,path_save,sample=samples,timeout=timeout,index=idx)
+    print(names[0])
+    print(path_anotation)
     path_query = find(names[0].replace('fasta','txt'), path_anotation)
     
     #Validación de si el archivo descargado coincide con el de anotación
