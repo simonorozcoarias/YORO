@@ -271,11 +271,11 @@ def metrics(threshold, df_groundT, df_pred, union_ids, pred_ids, ground_ids, lon
             continue
         
         Y_pred = revert_gff(np.array(Y_pred["Start"]), np.array(Y_pred["Length"]), np.array(Y_pred["Class"]), max_size, longNormal, classes)
-        dom_unique, dom_union1, dom_union2, Y2_pred_out = get_index(Y_true, Y_pred, 0.6, dicc_size, file_index, id)
-        classes2 = {3:"RT",4:"GAG",5:"ENV",6:"INT",7:"AP",8:"RNASEH",9:"LTR"}
-        k1 = get_fasta(Y_pred, dom_unique, dict_seq[id].seq, file_unique,id,classes2, k1,dicc_size)
+        #dom_unique, dom_union1, dom_union2, Y2_pred_out = get_index(Y_true, Y_pred, 0.6, dicc_size, file_index, id)
+        #classes2 = {3:"RT",4:"GAG",5:"ENV",6:"INT",7:"AP",8:"RNASEH",9:"LTR"}
+        #k1 = get_fasta(Y_pred, dom_unique, dict_seq[id].seq, file_unique,id,classes2, k1,dicc_size)
         Y_true_nt = nt_TE_LTR(Y_true, max_size, threshold, dicc_size)
-        Y_pred_nt = nt_TE_LTR(Y2_pred_out, max_size, threshold, dicc_size)
+        Y_pred_nt = nt_TE_LTR(Y_pred, max_size, threshold, dicc_size)
         ind = np.arange(0,Y_true.shape[0])
         #plt.figure(figsize=(10,7))
         #plt.plot(ind, Y_true[:,0])
@@ -424,7 +424,7 @@ if __name__ == '__main__':
     path = '/mnt/c/Users/estiv/Documents/Joven/Genomes/Prueba_FP_blast'
     filename = path+'/Oryza_sativa_ssp._Indica.tab'
     file_csv = path+'/../YoloDNA/metrics/genomes_links.csv'
-    path_anotation = path+'/../YoloDNA/metrics/dataset_intact_LTR-RT'
+    path_anotation = path+'/dataset_intact_LTR-RT_repeat'
     genome = path+'/R498_Chr.fasta'
     idx = 188
     threshold_presence = 0.85
