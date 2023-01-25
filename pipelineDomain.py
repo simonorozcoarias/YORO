@@ -205,7 +205,7 @@ def main():
         begin1 = time.time()
         Yhat_pred = NMS(Yhat_test, threshold_presence, threshold_NMS)
         finish1 = time.time() - begin1
-        np.save(f"Yhat_pred{file.replace('/','')}.npy",Yhat_pred)
+        np.save(f"Data/Yhat_pred{file.replace('/','')}.npy",Yhat_pred)
         print("Non-Max Supression exectuded: time elapsed {}s".format(finish1))
         '''
         
@@ -217,7 +217,7 @@ def main():
         #print("LTR detection executed: time elapsed {}s".format(finish1))
 
         
-        Yhat_pred = np.load(f"Yhat_pred{file.replace('/','')}.npy")
+        Yhat_pred = np.load(f"Data/Yhat_pred{file.replace('/','')}.npy")
         begin1 = time.time()
         outputfile = tabGeneration(filename,Yhat_pred,list_ids,total_win_len,threshold_presence)
         finish1 = time.time() - begin1

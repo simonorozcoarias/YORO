@@ -71,7 +71,8 @@ def metrics(df_pred, file, path_query):
     resultado = open(new_file,'w')
     ext = 8000
     dist_max = 4000
-    dom_min = 3
+    dom_min = 4
+    intern_min = 1e6
     for id in df_pred.index.unique().tolist():
         Y_pred = df_pred.loc[id].copy()
         yy_start = np.array(Y_pred["Start"])
@@ -92,7 +93,9 @@ def metrics(df_pred, file, path_query):
             fin = tupla[1]+ext
           resultado.write(f">{id}-{inicio}-{fin}\n")
           resultado.write(f"{genoma[id][inicio:fin]}\n")
-    return metrii(file, new_file, genoma, path_query)
+          if tupla[1]-tupla[0]<intern_min:
+            intern_min = tupla[1]-tupla[0]
+    return metrii(file, new_file, genoma, path_query, intern_min)
 
 def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inpactorTest,file_fasta):
     original_domains = {'RH':'RNASEH','aRH':'RNASEH','RH/aRH':'RNASEH','PROT':'AP','intact_5ltr':'LTR','intact_3ltr':'LTR'}

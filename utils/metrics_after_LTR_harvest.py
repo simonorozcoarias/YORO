@@ -18,7 +18,8 @@ def suffixerator(name):
 @ray.remote
 def ltrharvest(name):
   #subprocess.run(f'gt ltrharvest -index {name} -gff3 Data/{name}.gff3 -seqids yes -maxlenltr 3000 -similar 80', shell=True, check=True)
-  subprocess.run(f'gt ltrharvest -index {name} -gff3 Data/{name}.gff3 -seqids yes -maxlenltr 7000 -mintsd 4 -maxtsd 6 -similar 85 -vic 10 -seed 20', shell=True, check=True)
+  subprocess.run(f'gt ltrharvest -index {name} -gff3 Data/{name}.gff3 -seqids yes -maxlenltr 3000 -similar 80', shell=True, check=True)
+  #subprocess.run(f'gt ltrharvest -index {name} -gff3 Data/{name}.gff3 -seqids yes -maxlenltr 7000 -mintsd 4 -maxtsd 6 -similar 85 -vic 10 -seed 20', shell=True, check=True)
   return True
 
 def genome_generation(df_ltr, genoma, file):
@@ -38,7 +39,7 @@ def genome_generation(df_ltr, genoma, file):
   resultado.close()
   return None
 
-def metrii(file, new_file, genoma, path_query):
+def metrii(file, new_file, genoma, path_query, intern_min):
   point1 = time.time()
   wraper =open(new_file,'r')
   fasta = list(wraper)
@@ -127,6 +128,15 @@ def metrii(file, new_file, genoma, path_query):
   df_True = df_True[['Chromosome','real_start','real_end']]
   df_True.sort_values(['Chromosome','real_start'],inplace = True)
   df_True.set_index('Chromosome', inplace=True)
+
+  df_True['lon']=df_True['real_end']-df_True['real_start']
+  df_ltr['lon']=df_ltr['real_end']-df_ltr['real_start']
+  df_ltr = df_ltr[df_ltr['lon']>4450]
+  #df_ltr = df_ltr.loc['Chr1']
+  #df_True = df_True.loc['Chr1']
+  #print(intern_min)
+  df_True.to_csv('Oryza_true.csv',index =True)
+  df_ltr.to_csv('Oryza_pred.csv',index =True)
   print(df_True.columns)
   print(df_True.head())
 
