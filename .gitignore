@@ -6,3 +6,5 @@ metrics/dataset_intact_LTR-RT.tar.gz
 metrics/dataset_intact_LTR-RT
 metrics/sample30.csv
 Data/
+*.csv
+utils/__pycache__/

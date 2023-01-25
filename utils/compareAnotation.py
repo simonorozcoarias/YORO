@@ -46,7 +46,7 @@ def renames_gff(df, original_domains):
     for i in original_domains.keys():
         df.replace(i,original_domains[i],inplace=True)
 
-def metrics(df_pred, file, path_query):
+def metrics(df_pred, file, path_query, df_True):
     """
     Esta función calcula las métricas de precisión, recall, f1 y exactitud para los archivos 
     gff de anotación y predicción.
@@ -67,35 +67,7 @@ def metrics(df_pred, file, path_query):
     else:
       genoma = [(x.id, x.seq) for x in parser]
     genoma = {x:y for (x,y) in genoma}
-    new_file = file+'potential_TE'
-    resultado = open(new_file,'w')
-    ext = 8000
-    dist_max = 4000
-    dom_min = 4
-    intern_min = 1e6
-    for id in df_pred.index.unique().tolist():
-        Y_pred = df_pred.loc[id].copy()
-        yy_start = np.array(Y_pred["Start"])
-        yy_end = yy_start + np.array(Y_pred["Length"])
-        if yy_start.size ==1:
-          yy_start = np.array([yy_start])
-          yy_end = np.array([yy_end])
-        indices2 = [(yy_start[i],yy_end[i]) for i in range(len(yy_start))]
-        doms = clustering(A=indices2, dist_max=dist_max, dom_min=dom_min)
-        for tupla in doms:
-          if tupla[0]-ext<0:
-            inicio = 0
-          else:
-            inicio = tupla[0]-ext
-          if tupla[1]+ext>=len(genoma[id]):
-            fin = len(genoma[id])
-          else:
-            fin = tupla[1]+ext
-          resultado.write(f">{id}-{inicio}-{fin}\n")
-          resultado.write(f"{genoma[id][inicio:fin]}\n")
-          if tupla[1]-tupla[0]<intern_min:
-            intern_min = tupla[1]-tupla[0]
-    return metrii(file, new_file, genoma, path_query, intern_min)
+    return metrii(df_pred, df_True, genoma, path_query)
 
 def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inpactorTest,file_fasta):
     original_domains = {'RH':'RNASEH','aRH':'RNASEH','RH/aRH':'RNASEH','PROT':'AP','intact_5ltr':'LTR','intact_3ltr':'LTR'}
@@ -105,7 +77,6 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inp
     df_pred.sort_values(['id','Start'] , inplace = True)
     df_pred.set_index('id', drop=True, inplace=True)
     df_pred = df_pred.loc[
-        (df_pred['Class']=='LTR')|
         (df_pred['Class']=='GAG')|
         (df_pred['Class']=='RT')|
         (df_pred['Class']=='RNASEH')|
@@ -129,17 +100,17 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inp
             #Se lee el archivo de anotación de la especie
             df_groundTrue = pd.read_csv(path_query, sep='\t')
             df_groundTrue.columns = [i.replace(' ','') for i in list(df_groundTrue.columns)]
+            df_groundTrue.sort_values(['Chromosome','Start'] , inplace = True)
             df_groundTrue.set_index('Chromosome', drop=True, inplace=True)
             renames_gff(df_groundTrue, original_domains)
             df_groundTrue = df_groundTrue.loc[
-                (df_groundTrue['Domain']=='LTR')|
                 (df_groundTrue['Domain']=='GAG')|
                 (df_groundTrue['Domain']=='RT')|
                 (df_groundTrue['Domain']=='RNASEH')|
                 (df_groundTrue['Domain']=='INT')|
                 (df_groundTrue['Domain']=='AP')
             ]
-            pred_ids,ground_ids,union_ids = extract_ids(groundT=df_groundTrue, pred=df_pred)  
+            pred_ids,ground_ids,union_ids = extract_ids(groundT=df_groundTrue, pred=df_pred)
             file.write(f'Analysis for the specie of {specie}\n\n')
             file.write(f'Numero de ids unicos para el archivo de prediccion: {len(pred_ids)}\n')
             file.write(f'Numero de ids unicos para el archivo de ground True: {len(ground_ids)}\n')
@@ -147,5 +118,16 @@ def analysis(file_csv, path_anotation, idx, path_pred, name_file, threshold, inp
         else:
             print('ERROR: no se encontro la ruta del archivo de anotacion')
             sys.exit(1)
-    Precision, Recall, Accuracy, F1 = metrics(df_pred,file_fasta,path_query)
-    file.write(f"Precision: {Precision} \nRecall: {Recall}\nAccuracy: {Accuracy}\nF1: {F1}\n")
+    Precision, Recall, Accuracy, F1 = metrics(df_pred,file_fasta,path_query, df_True=df_groundTrue)
+    file.write('\nAll domains\n')
+    file.write(f"Precision: {Precision[0]} \nRecall: {Recall[0]}\nAccuracy: {Accuracy[0]}\nF1: {F1[0]}\n")
+    file.write('\nGAG\n')
+    file.write(f"Precision: {Precision[1]} \nRecall: {Recall[1]}\nAccuracy: {Accuracy[1]}\nF1: {F1[1]}\n")
+    file.write('\nRT\n')
+    file.write(f"Precision: {Precision[2]} \nRecall: {Recall[2]}\nAccuracy: {Accuracy[2]}\nF1: {F1[2]}\n")
+    file.write('\nRNASEH\n')
+    file.write(f"Precision: {Precision[3]} \nRecall: {Recall[3]}\nAccuracy: {Accuracy[3]}\nF1: {F1[3]}\n")
+    file.write('\nINT\n')
+    file.write(f"Precision: {Precision[4]} \nRecall: {Recall[4]}\nAccuracy: {Accuracy[4]}\nF1: {F1[4]}\n")
+    file.write('\nAP\n')
+    file.write(f"Precision: {Precision[5]} \nRecall: {Recall[5]}\nAccuracy: {Accuracy[5]}\nF1: {F1[5]}\n")
