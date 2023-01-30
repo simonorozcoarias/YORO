@@ -4,6 +4,13 @@ import numpy as np
 from Bio import SeqIO
 import multiprocessing
 
+## Se añaden estas dos librerias para generar un indentificador único en los archivos 2d.npy y poder ejecutar varios análisis al tiempo.
+import random
+import string
+
+N = 5
+uniqueID = ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
+
 from utils.onehotProcessing import fasta2one_hot
 
 
@@ -104,13 +111,13 @@ def create_dataset_master(list_ids, list_seqs, threads, total_win_len, outputDir
     for i in range(len(localTables)):
         if localTables[i].shape[0] > 1:
             try:
-                dataset = np.load(outputDir + '/dataset_2d_' + str(i) + '.npy')
+                dataset = np.load(outputDir + f'/dataset_{uniqueID}_2d_' + str(i) + '.npy')
                 for j in range(dataset.shape[0]):
                     splitted_genome[index, :, :] = dataset[j, :, :]
                     index += 1
-                os.remove(outputDir + '/dataset_2d_' + str(i) + '.npy')
+                os.remove(outputDir + f'/dataset_{uniqueID}_2d_' + str(i) + '.npy')
             except FileNotFoundError:
-                print('WARNING: I could not find: ' + outputDir + '/dataset_2d_' + str(i) + '.npy')
+                print('WARNING: I could not find: ' + outputDir + f'/dataset_{uniqueID}_2d_' + str(i) + '.npy')
     pool.close()
     return splitted_genome
     
@@ -123,7 +130,7 @@ def create_dataset_slave(list_seqs, total_win_len, outputdir, x):
             j += 1
 
         if dataset.shape[1] > 1:
-            np.save(outputdir + '/dataset_2d_' + str(x) + '.npy', dataset.astype(np.uint8))
+            np.save(outputdir + f'/dataset_{uniqueID}_2d_' + str(x) + '.npy', dataset.astype(np.uint8))
             return np.zeros((10, 10), dtype=bool)
         else:  # Process did not find any LTR-RT
             return np.zeros((1, 1), dtype=bool)

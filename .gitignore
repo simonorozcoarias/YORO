@@ -5,3 +5,9 @@ metrics/Out_4.tab
 metrics/dataset_intact_LTR-RT.tar.gz
 metrics/dataset_intact_LTR-RT
 metrics/sample30.csv
+
+*.fasta
+*.tab
+*.gff
+*.ipynb_checkpoints/
+**/__pycache__

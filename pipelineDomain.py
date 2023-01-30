@@ -29,6 +29,11 @@ from utils.compareAnotation import analysis
 from utils.Web_genome import download2
 from utils.complete_gff import main
 
+from utils.track_memory import track_memory_use, plot_memory_use
+
+headerFile = f'filename,fastasize,DownloadTime,FileSplittingTime,OneHotEncodigTime,LoadingNNTime,PredictionTime,NMSTime,LabelingLTRTime,FileWritingTime,overallTime,PipelineTimeExec,maxMemConsum\n'
+timesVect = []
+
 def argumentParser():
 
     """
@@ -62,7 +67,7 @@ def argumentParser():
     (options,_) = parser.parse_args()
     return options
     
-
+@track_memory_use(close=False, return_history=True,plot=False)
 def main():
     begin = time.time()
     options = argumentParser()
@@ -77,8 +82,8 @@ def main():
     threshold_NMS=options.nms
     total_win_len = options.win
     modelFilepath = options.model
-    file_csv = 'metrics/genomes_links.csv'
-    path_anotation = 'metrics/dataset_intact_LTR-RT'
+    file_csv = 'metrics/genomes_links_final_final.csv'
+    path_anotation = 'metrics/dataset_intact_LTR-RT/'
     idx = options.index
     inpactorTest = options.inpactorDB
     download = options.download
@@ -91,14 +96,25 @@ def main():
             sys.exit(1)
     else:
         path_save = '.'
+        begin1 = time.time()
         name = download2(file_csv, timeout, path_save, idx, path_anotation)
-        filename = name
-
-
+        finish1 = time.time() - begin1
+        print("FastaFile Download time elapsed: {}s".format(finish1))
+        file = name
+    time0 = time.time()
+    timesVect.append(str(file))
+    fastaSize = os.path.getsize(file)
+    timesVect.append(str(fastaSize))
+    #print("El tamaño del archivo es de: ",fastaSize)
+    timesVect.append(str(finish1))
     
     if filename is None:
-        print("No filename provided, using 'output.tab' as output filename.\n if this file exists, it will be overwrited")
+        
         filename = 'output.tab'
+        if download == "True":
+            filename = file.split('.')[0]+'.tab'
+        else:
+            print("No filename provided, using 'output.tab' as output filename.\n if this file exists, it will be overwrited")
     
     if outputDir is None:
         outputDir = ''
@@ -145,7 +161,7 @@ def main():
             print("An exception ocurred, the weigth file does not exist, please set a correct filenaname!")
             sys.exit(1)
     else:
-        modelFilepath = 'models/AAYOLO_domain_v17.hdf5'
+        modelFilepath = 'models/AAqqYOLOqqdomainqqV21.hdf5'
 
     # Cycles for detection
     slide_win = int(total_win_len / cycles)
@@ -164,24 +180,26 @@ def main():
         """
             Let's process the fasta file
         """
+
+        #print(file)
         begin1 = time.time()
         list_ids, list_seqs = get_final_dataset_size(file, total_win_len, slide)
         finish1 = time.time() - begin1
         print("Splited fasta File in secuences of {} nucleotides: time elapsed: {}s ".format(total_win_len,finish1))
+        timesVect.append(str(finish1))
         
-        
-        print("Validating nucleotides in secuences...")
-        begin1 = time.time()
-        check_nucleotides_master(list_seqs, threads)
-        finish1 = time.time() - begin1
-        print("Nucleotides in secuences checked!: time elapsed: {}s".format(finish1))
+        #print("Validating nucleotides in secuences...")
+        #begin1 = time.time()
+        #check_nucleotides_master(list_seqs, threads)
+        #finish1 = time.time() - begin1
+        #print("Nucleotides in secuences checked!: time elapsed: {}s".format(finish1))
 
         print("Encoding secuences into oneHot encoding")
         begin1 = time.time()
         splitted_genome = create_dataset_master(list_ids, list_seqs, threads, total_win_len, outputDir)
         finish1 = time.time() - begin1
         print("Encoded!!: time elapsed: {}s".format(finish1))
-
+        timesVect.append(str(finish1))
         list_seqs = None  # to clean unusable variable
 
         """
@@ -192,33 +210,39 @@ def main():
         model = loadNNArchitecture(total_win_len,modelFilepath)
         finish1 = time.time() - begin1
         print("NN Architecture loaded: time elapsed: {}s".format(finish1))
+        timesVect.append(str(finish1))
 
         print("Detecting Elements with DeepLearning")
         begin1 = time.time()
         Yhat_test = model.predict(splitted_genome[:,0:4,:])
         finish1 = time.time() - begin1
         print("Prediction Executed: time elapsed: {}s".format(finish1))
-
+        timesVect.append(str(finish1))
 
         begin1 = time.time()
         Yhat_pred = NMS(Yhat_test, threshold_presence, threshold_NMS)
         finish1 = time.time() - begin1
         print("Non-Max Supression exectuded: time elapsed {}s".format(finish1))
-        
+        timesVect.append(str(finish1))
+
         begin1 = time.time()
         label_add = label_LTR(splitted_genome[:,0:4,:],Yhat_pred,threshold_presence)
         Yhat_pred[:,:,:,0:3]=Yhat_pred[:,:,:,0:3]+label_add[:,:,:,0:3]
         Yhat_pred = np.concatenate((Yhat_pred,label_add[:,:,:,0:1]),axis=3)
         finish1 = time.time() - begin1
+        timesVect.append(str(finish1))
         print("LTR detection executed: time elapsed {}s".format(finish1))
 
+        num_domains = Yhat_pred.shape
+        print("The number of detected domains are",num_domains)
         begin1 = time.time()
         outputfile = tabGeneration(filename,Yhat_pred,list_ids,total_win_len,threshold_presence)
         finish1 = time.time() - begin1
         print("The output of this pipeline was written at: ", outputfile)
         print("File Writting time elapsed: {}s".format(finish1))
-        
-        if complete_gff=="True":
+        timesVect.append(str(finish1))
+
+        """if complete_gff=="True":
             begin1 = time.time() 
             if not os.path.exists(outputDir+"complete_gff"):
                 os.mkdir(outputDir+"complete_gff")
@@ -234,11 +258,22 @@ def main():
             path_analysis = filename.replace('tab','metrics')
             analysis(file_csv, path_anotation, idx, path_pred_anot, path_analysis, threshold = threshold_presence, inpactorTest = inpactorTest)
             finish1 = time.time() - begin1
-            print("The analysis file was writeen at: ",path_analysis)
+            print("The analysis file was writen at: ",path_analysis)
             print("Analysis Executed: time elapsed: {}s".format(finish1))
-
+        """
     finish = time.time() - begin
+    finish0 = time.time() - time0
     print("Total time elapsed for pipeline execution: {}s ".format(finish))
+    timesVect.append(str(finish))
+    timesVect.append(str(finish0))
+    resultfilecontent = headerFile + ','.join(timesVect)
+    return [file,resultfilecontent]
     
+
 if __name__ == '__main__':
-    main()
+    
+    resultToWrite, historyMem = main()
+    document = open(f"test/testResults_{resultToWrite[0].split('.')[0]}.csv",'w')
+    document.write(resultToWrite[1]+','+str(max(historyMem)))
+    document.close()
+    print("ExecutionComplete!!!!")
