@@ -196,8 +196,6 @@ def main():
         print("The output of this pipeline was written at: ", outputfile)
         print("File Writting time elapsed: {}s".format(finish1))
         timesVect.append(str(finish1))
-        
-        
 
     finish = time.time() - begin
     finish0 = time.time() - time0
