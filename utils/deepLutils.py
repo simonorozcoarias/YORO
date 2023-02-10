@@ -403,7 +403,7 @@ def IOU(box1,box2,size1,size2):
     iou = inter_area/(union_area + K.epsilon())
     return iou
 
-def NMS(Yhat, threshold_presence, threshold_NMS):
+def NMS(Yhat, threshold_presence, threshold_NMS=0.1):
   """
   NMS(Yhat, threshold_presence, threshold_NMS)
   Esta función realiza la operación del non-Max Suppression para las prediccio-
