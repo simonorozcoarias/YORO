@@ -5,8 +5,8 @@ def tabGeneration(resfile,Yhat_pred,list_ids,window,threshold_presence):
     This function writes the tabular file for the output
     
     '''
-    classes = {3:"RT",4:"GAG",5:"ENV",6:"INT",7:"AP",8:"RNASEH",9:"LTR"}
-    longNormal = {3:1000,4:3000,5:2000,6:2000,7:1000,8:1000,9:10000}
+    classes = {3:"RT",4:"GAG",5:"ENV",6:"INT",7:"AP",8:"RNASEH"}
+    longNormal = {3:1000,4:3000,5:2000,6:2000,7:1000,8:1000}
     print("Writting output file!!")
     resultado = open(resfile,'w')
     resultado.write("|id\t |ProbabilityPresence\t |Start\t |Length\t |Class\t |ProbabilityClass\n")

@@ -17,18 +17,12 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from utils.fastaProcessing import get_final_dataset_size
-from utils.fastaProcessing import check_nucleotides_master
 from utils.fastaProcessing import create_dataset_master
-
 from utils.deepLutils import loadNNArchitecture
-from utils.deepLutils import NMS, label_LTR
-
+from utils.deepLutils import NMS
 from utils.resultsWriting import tabGeneration
-
 from utils.compareAnotation import analysis
-from utils.Web_genome import download2
 from utils.complete_gff import main
-
 from utils.track_memory import track_memory_use, plot_memory_use
 
 headerFile = f'filename,fastasize,DownloadTime,FileSplittingTime,OneHotEncodigTime,LoadingNNTime,PredictionTime,NMSTime,LabelingLTRTime,FileWritingTime,overallTime,PipelineTimeExec,maxMemConsum\n'
@@ -66,7 +60,7 @@ def argumentParser():
     (options,_) = parser.parse_args()
     return options
     
-@track_memory_use(close=False, return_history=True,plot=False)
+#@track_memory_use(close=False, return_history=True,plot=False)
 def main():
     begin = time.time()
     options = argumentParser()
@@ -80,6 +74,8 @@ def main():
     total_win_len = options.win
     modelFilepath = options.model
     type_metrics = options.type_metrics
+    path_reference = options.reference_annotation
+    type_metrics = options.type_metrics
 
     if file is None:
         print("Please insert at least a file in FASTA format")
@@ -89,7 +85,7 @@ def main():
     timesVect.append(str(file))
     fastaSize = os.path.getsize(file)
     timesVect.append(str(fastaSize))
-    #print("El tamaño del archivo es de: ",fastaSize)
+    finish1 = time.time() - begin
     timesVect.append(str(finish1))
     
     if filename is None:
@@ -119,11 +115,6 @@ def main():
     if threshold_presence > 1.0 or threshold_presence < 0.0:
         print("An error ocurred in threshold value for presence, setting this by default 0.7")
         threshold_presence = 0.8
-
-    if threshold_NMS > 1.0 or threshold_NMS < 0.0:
-        print("An error ocurred in threshold value for NMS, setting this by default 0.1")
-        threshold_NMS = 0.1
-
 
     if total_win_len is not None:
         print("You set a different value for the input of the Neural network pre-trained, this pipeline should fail. \n Please retrain the neural network!!")
@@ -157,6 +148,7 @@ def main():
         print("Splited fasta File in secuences of {} nucleotides: time elapsed: {}s ".format(total_win_len,finish1))
         timesVect.append(str(finish1))
 
+        #'''
         print("Encoding secuences into oneHot encoding")
         begin1 = time.time()
         splitted_genome = create_dataset_master(list_ids, list_seqs, threads, total_win_len, outputDir)
@@ -183,13 +175,17 @@ def main():
         timesVect.append(str(finish1))
 
         begin1 = time.time()
-        Yhat_pred = NMS(Yhat_test, threshold_presence, threshold_NMS)
+        Yhat_pred = NMS(Yhat_test, threshold_presence)
         finish1 = time.time() - begin1
         print("Non-Max Supression exectuded: time elapsed {}s".format(finish1))
         timesVect.append(str(finish1))
 
+        np.save('Data/hola.npy',Yhat_pred)
+
+        #'''
+        Yhat_pred = np.load('Data/hola.npy')
         num_domains = Yhat_pred.shape
-        print("The number of detected domains are",num_domains)
+        print("The dimensions of the predicted labels are ",num_domains)
         begin1 = time.time()
         outputfile = tabGeneration(filename,Yhat_pred,list_ids,total_win_len,threshold_presence)
         finish1 = time.time() - begin1
@@ -197,14 +193,22 @@ def main():
         print("File Writting time elapsed: {}s".format(finish1))
         timesVect.append(str(finish1))
 
+        if type_metrics != None:
+          begin1 = time.time()
+          path_pred_anot = filename
+          path_analysis = filename.replace('tab','metrics')
+          analysis(path_pred_anot, path_analysis, file, path_reference, type_metrics, threads)
+          finish1 = time.time() - begin1
+          print("The analysis file was writeen at: ",path_analysis)
+          print("Analysis Executed: time elapsed: {}s".format(finish1))
+
     finish = time.time() - begin
     finish0 = time.time() - time0
     print("Total time elapsed for pipeline execution: {}s ".format(finish))
     timesVect.append(str(finish))
     timesVect.append(str(finish0))
     resultfilecontent = headerFile + ','.join(timesVect)
-    return [file,resultfilecontent]
-    
+    return [file.replace('/',''),resultfilecontent]
 
 if __name__ == '__main__':
     
