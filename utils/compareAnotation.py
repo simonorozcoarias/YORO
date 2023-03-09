@@ -24,7 +24,7 @@ def ltrharvest(name):
 def purge(df_ltr, df_internal):
   df_ltr = df_ltr.copy()
   df_internal = df_internal.copy()
-  df_internal.sort_values(['id','start'] , inplace = True)
+  df_internal.sort_values(['id','real_start'] , inplace = True)
   df_internal.set_index('id', inplace = True)
   df_ltr_grouped = df_ltr.groupby('id')
   count = 0
@@ -35,8 +35,8 @@ def purge(df_ltr, df_internal):
       yy_after_start = np.array([yy_after_start])
       yy_after_end = np.array([yy_after_end])
     Y_before = df_internal.loc[id].copy()
-    yy_before_start = np.array(Y_before["start"])
-    yy_before_end = np.array(Y_before["end"])
+    yy_before_start = np.array(Y_before["real_start"])
+    yy_before_end = np.array(Y_before["real_end"])
     if yy_before_start.size ==1:
       yy_before_start = np.array([yy_before_start])
       yy_before_end = np.array([yy_before_end])
@@ -266,8 +266,8 @@ def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, th
   file = file.split('/')[-1]
   new_file = file+'potential_TE'
   resultado = open(new_file,'w')
-  internal_regions = open(file+'_internal_regions','w')
-  internal_regions.write(f"id\tstart\tend\n")
+  internal_regions = open(file.split('.')[0]+'_internal_regions.csv','w')
+  internal_regions.write(f"id,real_start,real_end\n")
   ext = 8000
   dist_max = 4000
   dom_min = 5
@@ -291,7 +291,7 @@ def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, th
           fin = tupla[1]+ext
         resultado.write(f">{id}-{inicio}-{fin}\n")
         resultado.write(f"{genoma[id][inicio:fin]}\n")
-        internal_regions.write(f"{id}\t{tupla[0]}\t{tupla[1]}\n")
+        internal_regions.write(f"{id},{tupla[0]},{tupla[1]}\n")
   resultado.close()
   internal_regions.close()
 
@@ -341,7 +341,7 @@ def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, th
   df_ltr['id'] = df_ltr.apply(lambda row: (row.id.split('-')[0]), axis = 1)
   df_ltr = df_ltr[['id','real_start','real_end']]
   df_ltr.sort_values(['id','real_start'],inplace = True)
-  df_internal = pd.read_csv(file+'_internal_regions', sep='\t')
+  df_internal = pd.read_csv(file.split('.')[0]+'_internal_regions.csv', sep=',')
   df_ltr = purge(df_ltr, df_internal)
   df_ltr.set_index('id',drop=True,inplace=True)
 
