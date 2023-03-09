@@ -263,6 +263,7 @@ def metrics_individual_domains(df_ltr, genoma, path_reference):
   return Precision, Recall, Accuracy, F1
 
 def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, threads):
+  file = file.split('/')[-1]
   new_file = file+'potential_TE'
   resultado = open(new_file,'w')
   internal_regions = open(file+'_internal_regions','w')
@@ -318,12 +319,6 @@ def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, th
     lista_harv.append(ltrharvest.remote(lista_suf[i]))
   z = ray.get(lista_harv)
 
-  new_file = new_file.split('/')[-1]
-  all_files = glob.glob(f"{new_file}*")
-  for path in all_files:
-    if 'gff' not in path:
-      os.remove(path)
-
   df_list=[]
   for i in range(num_cores):
     filef = open(f"{new_file}{i}.gff3", "r")
@@ -336,10 +331,6 @@ def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, th
     resultado.close()
     filef.close()
     df_list.append(pd.read_csv(f'{new_file}{i}new.gff3', sep='\t'))
-
-  for i in range(num_cores):
-    os.remove(f'{new_file}{i}.gff3')
-    os.remove(f'{new_file}{i}new.gff3')
 
   df_ltr = pd.concat(df_list, axis=0, ignore_index =True)
   df_list = None
@@ -359,7 +350,7 @@ def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, th
   df_True.set_index('sequence', drop=True, inplace=True)
   df_True['lon'] = df_True['real_end'] - df_True['real_start']
   #df_True[['real_start','real_end','lon']].to_csv('Oryza_true.csv',index =True)
-  #df_ltr.to_csv('Oryza_pred.csv',index =True)
+  df_ltr.to_csv(f'{file.split(".")[0]}_pred.csv',index =True)
 
   # Aquí se calculan las metricas
   ids_pred = df_ltr.index.unique().tolist()
@@ -428,6 +419,9 @@ def metrics_individual_with_ltr_harvest(df_ltr, genoma, path_reference, file, th
   Accuracy = (TP + TN)/ (TP + FN + TN + FP+K.epsilon())
   F1 = 2* Precision*Recall/(Precision + Recall+K.epsilon())
   print(f"Precision: {Precision}\nRecall: {Recall}\nAccuracy: {Accuracy}\nF1: {F1}")
+  all_files = glob.glob(f"{new_file}*")
+  for path in all_files:
+    os.remove(path)
   return Precision, Recall, Accuracy, F1
 
 def metrics(df_pred, file, path_reference, type_metrics, threads):
