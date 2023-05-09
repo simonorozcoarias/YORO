@@ -1,4 +1,5 @@
-# YOLO-DNA: Pipeline for LTR-Retrotransposones detection using Deep Neural Network YOLO inspired
+# YORO: Pipeline for LTR-Retrotransposon detection using Deep Neural Network YOLO inspired
+## Genomic Object Detection: An Improved Approach for Transposable Element Detection and Classification Using Convolutional Neural Networks
 
 
 ## Installation:
@@ -7,7 +8,7 @@
 We highly recommend to use and install Python packages within an Anaconda environment. First, download the lastest version of YOLO-DNA
 
 ```
-git clone https://github.com/simonorozcoarias/YoloDNA.git
+git clone https://github.com/simonorozcoarias/YORO.git
 ```
 
 Go to the YoloDNA folder and find the file named "requirements.txt". Then, create and setup the environment: 
