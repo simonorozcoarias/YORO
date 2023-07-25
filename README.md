@@ -11,27 +11,27 @@ We highly recommend to use and install Python packages within an Anaconda enviro
 git clone https://github.com/simonorozcoarias/YORO.git
 ```
 
-Go to the YoloDNA folder and find the file named "requirements.txt". Then, create and setup the environment: 
+Go to the YORO folder and find the file named "requirements.txt". Then, create and setup the environment: 
 
 ```
-conda create -n YoloDNA python=3
-conda activate YoloDNA
+conda create -n YORO python=3
+conda activate YORO
 pip install -r requirements.txt
 ```
 
 ## Testing:
 <a name="testing"/>
 
-After successfully installing YoloDNA, you can test it using the testing data contained in this repository. To do so, first you must activate the conda environment:
+After successfully installing YORO, you can test it using the testing data contained in this repository. To do so, first you must activate the conda environment:
 ```
-conda activate YoloDNA
+conda activate YORO
 ```
 Then, you must run the following command:
 ```
 python3 pipelineDomain.py -f test/TEx3.fasta -d temp
 ```
 
-Finally compare your results in the folder temp/output.tab with the file in the folder test 'output.tab'. If you obtain similar (or also the same) results, congrats! the YoloDNA pipeline is now installed and funcional.
+Finally compare your results in the folder temp/output.tab with the file in the folder test 'output.tab'. If you obtain similar (or also the same) results, congrats! the YORO pipeline is now installed and funcional.
 
 
 ## Parameters
@@ -47,7 +47,7 @@ All parameters that can be configurated are:
 * -f FASTA_FILE or --file FASTA_FILE: Fasta file containing DNA sequences **(required)**.
 * -o OUTPUTNAME or --outputName name: Filename of the output file. Default: output.tab
 * -d DIRECTORY or --directory DIRECTORY: Output Path to save output file. Default: Current directory.
-* -p THREADS or --threads THREADS: Number of threads to be used by YoloDNA. Default: all available threads.
+* -p THREADS or --threads THREADS: Number of threads to be used by YORO. Default: all available threads.
 * -t THRESHOLD or --threshold THRESHOLD: Threshold value for presence filter. Default: 0.6.
 * -n NMS or --nms NMS: Non-Max supression value to filter secuences. Default: 0.1
 * -w WINDOW or --window WINDOW: Window size for object detection and secuence splitting. Default: 50000
