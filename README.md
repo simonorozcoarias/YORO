@@ -5,7 +5,7 @@
 ## Installation:
 <a name="installation"/>
 
-We highly recommend to use and install Python packages within an Anaconda environment. First, download the lastest version of YOLO-DNA
+We highly recommend to use and install Python packages within an Anaconda environment. First, download the lastest version of YORO
 
 ```
 git clone https://github.com/simonorozcoarias/YORO.git
