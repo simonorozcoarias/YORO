@@ -1,4 +1,4 @@
-name: YoloDNA
+name: YORO
 channels:
   - jmcmurray
   - intel
@@ -89,4 +89,3 @@ dependencies:
     - tensorboard-plugin-wit==1.8.1
     - urllib3==1.26.9
     - zipp==1.2.0
-prefix: /shared/home/rguyot/anaconda3/envs/yolo
