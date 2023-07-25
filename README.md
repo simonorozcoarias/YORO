@@ -1,4 +1,4 @@
-# YORO: Pipeline for LTR-Retrotransposon detection using Deep Neural Network YOLO inspired
+# YORO: Pipeline for LTR-Retrotransposon domains detection and classification using Deep Neural Network YOLO inspired
 ## Genomic Object Detection: An Improved Approach for Transposable Element Detection and Classification Using Convolutional Neural Networks
 
 
@@ -14,9 +14,7 @@ git clone https://github.com/simonorozcoarias/YORO.git
 Go to the YORO folder and find the file named "requirements.txt". Then, create and setup the environment: 
 
 ```
-conda create -n YORO python=3
-conda activate YORO
-pip install -r requirements.txt
+conda env create -f environment.yml
 ```
 
 ## Testing:
