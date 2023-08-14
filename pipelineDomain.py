@@ -21,7 +21,7 @@ from utils.fastaProcessing import create_dataset_master
 from utils.deepLutils import loadNNArchitecture
 from utils.deepLutils import NMS
 from utils.resultsWriting import tabGeneration
-from utils.compareAnotation import analysis
+#from utils.compareAnotation import analysis
 from utils.complete_gff import main
 from utils.track_memory import track_memory_use, plot_memory_use
 
@@ -52,15 +52,12 @@ def argumentParser():
     parser.add_option('-c', '--cycles',dest='cycles',help='Numbers of cycles of detections',type=int, default=1)
     parser.add_option('-w', '--window',dest='win',help='Window size for object detection',type=int,default=50000)
     parser.add_option('-m', '--modelpath',dest='model',help='Path to models weights',type=str,default=None)
-    parser.add_option('-M', '--type_metrics',dest='type_metrics',help='',type=str,default=None)    
-    #Eliminar lo del csv
-    #parser.add_option('-x', '--index',dest='index',help='Index of name genome (1-226)',type=int,default=None)    
-    #Para métricas
-    parser.add_option('-T', '--test',dest='reference_annotation',help='Select a test annotation file. The columns of the file match these names <id_secuence\tStart\tLength\tDomain>.',type=str,default=None) 
+    #parser.add_option('-M', '--type_metrics',dest='type_metrics',help='',type=str,default=None)    
+    #parser.add_option('-T', '--test',dest='reference_annotation',help='Select a test annotation file. The columns of the file match these names <id_secuence\tStart\tLength\tDomain>.',type=str,default=None) 
     (options,_) = parser.parse_args()
     return options
     
-#@track_memory_use(close=False, return_history=True,plot=False)
+@track_memory_use(close=False, return_history=True,plot=False)
 def main():
     begin = time.time()
     options = argumentParser()
@@ -73,9 +70,8 @@ def main():
     cycles = options.cycles
     total_win_len = options.win
     modelFilepath = options.model
-    type_metrics = options.type_metrics
-    path_reference = options.reference_annotation
-    type_metrics = options.type_metrics
+    #type_metrics = options.type_metrics
+    #path_reference = options.reference_annotation
 
     if file is None:
         print("Please insert at least a file in FASTA format")
@@ -148,7 +144,6 @@ def main():
         print("Splited fasta File in secuences of {} nucleotides: time elapsed: {}s ".format(total_win_len,finish1))
         timesVect.append(str(finish1))
 
-        #'''
         print("Encoding secuences into oneHot encoding")
         begin1 = time.time()
         splitted_genome = create_dataset_master(list_ids, list_seqs, threads, total_win_len, outputDir)
@@ -180,10 +175,6 @@ def main():
         print("Non-Max Supression exectuded: time elapsed {}s".format(finish1))
         timesVect.append(str(finish1))
 
-        np.save('Data/hola.npy',Yhat_pred)
-
-        #'''
-        Yhat_pred = np.load('Data/hola.npy')
         num_domains = Yhat_pred.shape
         print("The dimensions of the predicted labels are ",num_domains)
         begin1 = time.time()
@@ -193,6 +184,7 @@ def main():
         print("File Writting time elapsed: {}s".format(finish1))
         timesVect.append(str(finish1))
 
+        '''
         if type_metrics != None:
           begin1 = time.time()
           path_pred_anot = filename
@@ -201,6 +193,7 @@ def main():
           finish1 = time.time() - begin1
           print("The analysis file was writeen at: ",path_analysis)
           print("Analysis Executed: time elapsed: {}s".format(finish1))
+        '''
 
     finish = time.time() - begin
     finish0 = time.time() - time0
