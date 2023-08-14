@@ -14,7 +14,7 @@ git clone https://github.com/simonorozcoarias/YORO.git
 Go to the YORO folder and find the file named "requirements.txt". Then, create and setup the environment: 
 
 ```
-conda create --name YORO --file environment.yml
+conda env create --name YORO --file environment.yml
 conda activate YORO
 
 ```
