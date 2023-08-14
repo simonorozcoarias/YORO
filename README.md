@@ -1,4 +1,5 @@
-# YORO: Pipeline for LTR-Retrotransposones detection using Deep Neural Network YOLO inspired
+# YORO: Pipeline for LTR-Retrotransposon domains detection and classification using Deep Neural Network YOLO inspired
+## Genomic Object Detection: An Improved Approach for Transposable Element Detection and Classification Using Convolutional Neural Networks
 
 
 ## Installation
@@ -15,12 +16,18 @@ Go to the YORO folder and find the file named "requirements.txt". Then, create a
 ```
 conda create --name YORO --file environment.yml
 conda activate YORO
+
 ```
 
 ## Testing
 <a name="testing"/>
 
 After successfully installing YORO, you can test it by using any genome. In this case, we will use the genome of Oryza Sativa:
+
+```
+conda activate YORO
+```
+Then, you must run the following command:
 
 ```
 wget -O test/rice.fasta http://rice.uga.edu/pub/data/Eukaryotic_Projects/o_sativa/annotation_dbs/pseudomolecules/version_7.0/all.dir/all.con

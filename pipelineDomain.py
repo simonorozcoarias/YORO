@@ -25,7 +25,7 @@ from utils.resultsWriting import tabGeneration
 from utils.complete_gff import main
 from utils.track_memory import track_memory_use, plot_memory_use
 
-headerFile = f'filename,fastasize,DownloadTime,FileSplittingTime,OneHotEncodigTime,LoadingNNTime,PredictionTime,NMSTime,LabelingLTRTime,FileWritingTime,overallTime,PipelineTimeExec,maxMemConsum\n'
+headerFile = f"filename,fastasize,DownloadTime,FileSplittingTime,OneHotEncodigTime,LoadingNNTime,PredictionTime,NMSTime,LabelingLTRTime,FileWritingTime,overallTime,PipelineTimeExec,maxMemConsum\n"
 timesVect = []
 
 def argumentParser():
