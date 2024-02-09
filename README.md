@@ -20,8 +20,6 @@ conda activate YORO
 ```
 
 ## Testing
-<a name="testing"/>
-
 After successfully installing YORO, you can test it by using any genome. In this case, we will use the genome of Oryza Sativa:
 
 ```
@@ -39,8 +37,6 @@ Finally compare your results in the path 'temp/output.tab' with the file in 'tes
 
 
 ## Parameters
-<a name="parameters"/>
-
 To obtain all parameters for pipeline execution, please run: 
 ```
 python3 pipelineDomain.py -h
@@ -59,8 +55,6 @@ All parameters that can be configurated are:
 
 
 ## Fast execution
-<a name="fastexe"/>
-
 To execute this pipeline you just need provide the fasta file for predictions and run as follows:
 
 ```
@@ -72,8 +66,6 @@ python3 pipelineDomain.py -f FASTA_FILE.fasta -o ModifidedOutput.tab
 ```
 
 ## Pipeline Output
-<a name="output"/>
-
 This tool produces one tabular file with this format:
 
 ```
