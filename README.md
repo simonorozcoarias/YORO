@@ -80,4 +80,7 @@ where:
 * Class: Type of Transposable element predicted
 * ProbabilityClass: Probability of this class of transposable element.
 
+## Citation
+If you use any material from this repository, please cite us as following:
 
+Orozco-Arias, S., Lopez-Murillo, L. H., Piña, J. S., Valencia-Castrillon, E., Tabares-Soto, R., Castillo-Ossa, L., Isaza, G. & Guyot, R. (2023). Genomic object detection: An improved approach for transposable elements detection and classification using convolutional neural networks. Plos one, 18(9), e0291925.
